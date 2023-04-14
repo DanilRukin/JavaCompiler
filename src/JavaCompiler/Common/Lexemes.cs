@@ -7,10 +7,14 @@ using System.Threading.Tasks;
 namespace JavaCompiler.Common
 {
     /// <summary>
-	/// Набор лексем языка, таких как точка, запятая, ключевые слова, и т.д.
+	/// Типы лексем языка, таких как точка, запятая, ключевые слова, и т.д.
 	/// </summary>
     public enum Lexemes
     {
+        //
+        // ключевые слова
+        //
+
         /// <summary>
         /// class
         /// </summary>
@@ -20,26 +24,6 @@ namespace JavaCompiler.Common
         /// while
         /// </summary>
         TypeWhileKeyWord,
-
-        /// <summary>
-        /// Например, 14,5
-        /// </summary>
-        TypeDoubleLiteral,
-
-        /// <summary>
-        /// Например, 8
-        /// </summary>
-        TypeIntLiteral,
-
-        /// <summary>
-        /// true, false
-        /// </summary>
-        TypeBooleanLiteral,
-
-        /// <summary>
-        /// null
-        /// </summary>
-        TypeNullLiteral,
 
         /// <summary>
         /// return
@@ -67,9 +51,46 @@ namespace JavaCompiler.Common
         TypeBooleanKeyWord,
 
         /// <summary>
+        /// new
+        /// </summary>
+        TypeNewKeyWord,
+
+        //
+        // Литералы
+        //
+
+        /// <summary>
+        /// Например, 14,5
+        /// </summary>
+        TypeDoubleLiteral,
+
+        /// <summary>
+        /// Например, 8
+        /// </summary>
+        TypeIntLiteral,
+
+        /// <summary>
+        /// true, false
+        /// </summary>
+        TypeBooleanLiteral,
+
+        /// <summary>
+        /// null
+        /// </summary>
+        TypeNullLiteral,
+
+        //
+        // Идентификатор
+        //
+
+        /// <summary>
         /// Например, MyAnimal
         /// </summary>
         TypeIdentifier,
+
+        //
+        // Знаки сравнения, арифметики
+        //
 
         /// <summary>
         /// &lt;
@@ -141,6 +162,10 @@ namespace JavaCompiler.Common
         /// </summary>
         TypeMod,
 
+        //
+        // Специальные символы
+        // 
+
         /// <summary>
         /// .
         /// </summary>
@@ -175,6 +200,10 @@ namespace JavaCompiler.Common
         /// ,
         /// </summary>
         TypeComma,
+
+        //
+        // Прочие символы
+        //
 
         TypeError,
 
