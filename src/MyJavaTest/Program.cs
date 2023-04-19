@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MyJavaTest.Application.TestRunner;
+using Serilog;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace MyJavaTest
@@ -18,6 +19,7 @@ namespace MyJavaTest
                 services.AddScoped<Lexer>()
                 .AddScoped<Runner>();
             })
+            .UseSerilog()
             .Build();
             try
             {
@@ -29,7 +31,7 @@ namespace MyJavaTest
             }
             catch (Exception e)
             {
-                host.Services.GetRequiredService<ILogger>().LogError(e.Message);
+                host.Services.GetRequiredService<Microsoft.Extensions.Logging.ILogger>().LogError(e.Message);
             }
             finally
             {
