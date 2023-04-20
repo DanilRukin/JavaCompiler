@@ -14,10 +14,19 @@ namespace MyJavaTest
         {
             IHost host = Host
             .CreateDefaultBuilder(args)
+            .ConfigureLogging((context, logging) =>
+            {
+                Log.Logger = new LoggerConfiguration()
+                .ReadFrom
+                .Configuration(context.Configuration)
+                .CreateLogger();
+                //logging.AddSerilog();
+            })
             .ConfigureServices((context, services) =>
             {
                 services.AddScoped<Lexer>()
-                .AddScoped<Runner>();
+                .AddScoped<Runner>()
+                .AddSingleton<Microsoft.Extensions.Logging.ILogger>(LoggerFactory.Create(logging => logging.AddSerilog()).CreateLogger("Logger"));
             })
             .UseSerilog()
             .Build();

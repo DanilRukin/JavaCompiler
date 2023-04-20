@@ -8,8 +8,8 @@ namespace JavaCompiler.Common
 {
     public class Token
     {
-        public Lexemes Lexeme { get; }
-        public string Value { get; }
+        public Lexemes Lexeme { get; set; }
+        public string Value { get; set; }
         public Token(Lexemes lexeme, string value)
         {
             Lexeme = lexeme;
