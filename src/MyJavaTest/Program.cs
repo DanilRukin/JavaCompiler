@@ -26,13 +26,13 @@ namespace MyJavaTest
             {
                 services.AddScoped<Lexer>()
                 .AddScoped<Runner>()
-                .AddSingleton<Microsoft.Extensions.Logging.ILogger>(LoggerFactory.Create(logging => logging.AddSerilog()).CreateLogger("Logger"));
+                .AddSingleton(LoggerFactory.Create(logging => logging.AddSerilog()).CreateLogger("Logger"));
             })
             .UseSerilog()
             .Build();
             try
             {
-                host.StartAsync();
+                host.Start();
 
                 IServiceProvider services = host.Services;
                 var runner = services.GetRequiredService<Runner>();

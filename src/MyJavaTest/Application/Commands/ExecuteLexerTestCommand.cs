@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MyJavaTest.Application.Commands
 {
-    public class ExecuteLexerTestCommand
+    public class ExecuteLexerTestCommand : TestCommand
     {
         private Lexer _lexer;
         private IConfiguration _configuration;
@@ -27,8 +27,10 @@ namespace MyJavaTest.Application.Commands
         {
             if (fileName.Substring(fileName.LastIndexOf('.') + 1) == _configuration["LexerTestFileExtension"])
             {
-                _lexer.Open(fileName);
+                string text = GetText(fileName);
+                _lexer.SetText(text);
                 _logger.LogInformation($"\\\\----------------Start testing '{fileName}'-------------------//\r\n");
+                _logger.LogInformation($"File content is:\r\n\r\n{text}\r\n\r\n");
                 Token token;
                 while ((token = _lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
                 {
@@ -36,7 +38,7 @@ namespace MyJavaTest.Application.Commands
                 }
                 _logger.LogInformation($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
                 _logger.LogInformation($"//----------------Test ends-------------------\\\\\r\n\r\n");
-                _lexer.Close();
+                _lexer.ClearText();
             }           
         }
     }

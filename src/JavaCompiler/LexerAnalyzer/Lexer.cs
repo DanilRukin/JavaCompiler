@@ -4,8 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static JavaCompiler.LexerAnalyzer.Lexer;
-using static System.Net.Mime.MediaTypeNames;
+
 
 namespace JavaCompiler.LexerAnalyzer
 {
@@ -44,7 +43,16 @@ namespace JavaCompiler.LexerAnalyzer
 
         public void SetText(string text)
         {
+            CurrentColumn = 0;
+            CurrentRow = 0;
             _text = text ?? throw new ArgumentNullException(nameof(text));
+        }
+
+        public void ClearText()
+        {
+            CurrentColumn = 0;
+            CurrentRow = 0;
+            _text = string.Empty;
         }
 
         public Position SavePosition()
@@ -54,34 +62,6 @@ namespace JavaCompiler.LexerAnalyzer
         public void RestorePosition(Position position)
         {
             position.Restore();
-        }
-
-        public void Open(string fileName)
-        {
-            using FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-            CurrentRow = 0;
-            CurrentColumn = 0;
-            StringBuilder builder = new StringBuilder((int)stream.Length);
-            char symbol;
-            int @byte = -1;
-            for (int i = 0; i < stream.Length; i++)
-            {
-                @byte = stream.ReadByte();
-                if (@byte > -1)
-                {
-                    symbol = (char)stream.ReadByte();
-                    builder.Append(symbol);
-                }               
-            }
-            _text = builder.ToString();
-            stream.Close();
-        }
-
-        public void Close()
-        {
-            _text = string.Empty;
-            CurrentColumn = 0;
-            CurrentRow = 0;
         }
 
         public Token NextToken()
