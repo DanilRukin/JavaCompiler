@@ -19,7 +19,7 @@ namespace MyJavaTest.Application.Commands
                 @byte = stream.ReadByte();
                 if (@byte > -1)
                 {
-                    symbol = (char)stream.ReadByte();
+                    symbol = (char)@byte;
                     builder.Append(symbol);
                 }
             }
