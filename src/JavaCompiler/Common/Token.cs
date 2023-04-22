@@ -16,5 +16,15 @@ namespace JavaCompiler.Common
             Value = value;
         }
         public static Token Default() => new Token(Lexemes.TypeEnd, "#");
+
+        public override bool Equals(object? obj)
+        {
+            if (obj == null)
+                return false;
+            if (!(obj is Token)) 
+                return false;
+            Token token = (Token)obj;
+            return token.Lexeme == this.Lexeme && token.Value == this.Value;
+        }
     }
 }

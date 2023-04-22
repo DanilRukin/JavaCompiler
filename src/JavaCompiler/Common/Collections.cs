@@ -10,7 +10,7 @@ namespace JavaCompiler.Common
     {
         public static string[] KeyWords = new string[]
         {
-            "class", "while", "new", "return", "int", "double", "boolean", "final"
+            "class", "while", "new", "return", "int", "double", "boolean", "final", "void"
         };
 
         public static string[] Literals = new string[]
@@ -57,6 +57,7 @@ namespace JavaCompiler.Common
             { "++", Lexemes.TypeIncrement },
             { "-", Lexemes.TypeMinus },
             { "--", Lexemes.TypeDecrement },
+            { "void", Lexemes.TypeVoidKeyWord },
         };
 
         public static Lexemes GetLexemeByName(string name)

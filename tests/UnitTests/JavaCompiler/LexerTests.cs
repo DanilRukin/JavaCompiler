@@ -62,12 +62,17 @@ namespace UnitTests.JavaCompiler
                 new object[] { "++", Lexemes.TypeIncrement },
                 new object[] { "-", Lexemes.TypeMinus },
                 new object[] { "--", Lexemes.TypeDecrement },
+                new object[] { "void", Lexemes.TypeVoidKeyWord },
             };
 
 
         [Theory]
         [InlineData("// simple comment")]
         [InlineData("// // /12345!@#$/")]
+        [InlineData("// class main {} %")]
+        [InlineData("// void static hash")]
+        [InlineData("// /**/")]
+        [InlineData("// /*******///")]
         public void NextToken_SimpleComments_ReturnDefaultToken(string text)
         {
             _lexer.SetText(text);
@@ -76,6 +81,20 @@ namespace UnitTests.JavaCompiler
 
             Assert.Equal(def.Lexeme, token.Lexeme);
             Assert.Equal(def.Value, token.Value);
+
+            _lexer.ClearText();
+        }
+
+        [Theory]
+        [InlineData("/**/")]
+        public void NextToken_MultilineComments_ReturnDefaultToken(string text)
+        {
+            _lexer.SetText(text);
+
+            Token token = _lexer.NextToken();
+            Token def = Token.Default();
+
+            Assert.Equal(def, token);
 
             _lexer.ClearText();
         }

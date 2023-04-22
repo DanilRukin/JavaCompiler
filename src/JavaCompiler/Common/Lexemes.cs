@@ -51,6 +51,11 @@ namespace JavaCompiler.Common
         TypeBooleanKeyWord,
 
         /// <summary>
+        /// void
+        /// </summary>
+        TypeVoidKeyWord,
+
+        /// <summary>
         /// new
         /// </summary>
         TypeNewKeyWord,
