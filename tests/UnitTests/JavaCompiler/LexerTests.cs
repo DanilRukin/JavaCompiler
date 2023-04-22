@@ -10,16 +10,21 @@ namespace UnitTests.JavaCompiler
 {
     public class LexerTests
     {
+        Lexer _lexer;
+
+        public LexerTests() => _lexer = new Lexer();
+
         [Theory]
         [MemberData(nameof(KeyWordsWithLexemesData))]
         public void NextToken_OnlySimpleKeyWords_ReturnValidTokens(string correctValue, Lexemes correctLexeme)
         {
-            Lexer lexer = new Lexer();
-            lexer.SetText(correctValue);
+            _lexer.SetText(correctValue);
 
-            Token token = lexer.NextToken();
+            Token token = _lexer.NextToken();
             Assert.Equal(correctValue, token.Value);
             Assert.Equal(correctLexeme, token.Lexeme);
+
+            _lexer.ClearText();
         }
 
         public static IEnumerable<object[]> KeyWordsWithLexemesData =>
@@ -58,5 +63,21 @@ namespace UnitTests.JavaCompiler
                 new object[] { "-", Lexemes.TypeMinus },
                 new object[] { "--", Lexemes.TypeDecrement },
             };
+
+
+        [Theory]
+        [InlineData("// simple comment")]
+        [InlineData("// // /12345!@#$/")]
+        public void NextToken_SimpleComments_ReturnDefaultToken(string text)
+        {
+            _lexer.SetText(text);
+            Token token = _lexer.NextToken();
+            Token def = Token.Default();
+
+            Assert.Equal(def.Lexeme, token.Lexeme);
+            Assert.Equal(def.Value, token.Value);
+
+            _lexer.ClearText();
+        }
     }
 }
