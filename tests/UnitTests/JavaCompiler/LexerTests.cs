@@ -79,14 +79,20 @@ namespace UnitTests.JavaCompiler
             Token token = _lexer.NextToken();
             Token def = Token.Default();
 
-            Assert.Equal(def.Lexeme, token.Lexeme);
-            Assert.Equal(def.Value, token.Value);
+            //Assert.Equal(def.Lexeme, token.Lexeme);
+            //Assert.Equal(def.Value, token.Value);
+
+            Assert.Equal(def, token);
 
             _lexer.ClearText();
         }
 
         [Theory]
         [InlineData("/**/")]
+        [InlineData("/***/")]
+        [InlineData("/****/")]
+        [InlineData("/**hello*,world*/")]
+        [InlineData("/**hello*,world*\r\nsome text class Main\r\n/")]
         public void NextToken_MultilineComments_ReturnDefaultToken(string text)
         {
             _lexer.SetText(text);

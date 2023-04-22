@@ -125,7 +125,7 @@ namespace JavaCompiler.LexerAnalyzer
                         while (!EndOfFile)
                         {
                             SkipSimpleIgnorableSymbols();
-                            if (_symbol == '*')  // пропускаем 
+                            if (_symbol == '*')  // пропускаем, возможно, конечная *, а может и нет
                             {
                                 CurrentColumn++;
 
@@ -143,6 +143,7 @@ namespace JavaCompiler.LexerAnalyzer
                                     {
                                         CurrentColumn++;
                                         endOfDifficultComment = true;
+                                        break;
                                         // выйти на самый внешний цикл
                                     }
                                     else
