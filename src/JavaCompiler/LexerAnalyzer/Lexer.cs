@@ -125,7 +125,7 @@ namespace JavaCompiler.LexerAnalyzer
                         while (!EndOfFile)
                         {
                             SkipSimpleIgnorableSymbols();
-                            if (_symbol == '*')  // пропускаем, возможно, конечная *, а может и нет
+                            if (_symbol == '*')  // возможно, конечная *, а может и нет
                             {
                                 CurrentColumn++;
 

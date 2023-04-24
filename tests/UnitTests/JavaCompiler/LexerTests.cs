@@ -92,7 +92,8 @@ namespace UnitTests.JavaCompiler
         [InlineData("/***/")]
         [InlineData("/****/")]
         [InlineData("/**hello*,world*/")]
-        [InlineData("/**hello*,world*\r\nsome text class Main\r\n/")]
+        [InlineData("/**hello*,world*\r\nsome text class Main\r\n/")] // думаю, что можно считать допустимым такой комментарий, т.к. после него никакого кода
+        [InlineData("/**hello*,world*\r\nsome text class Main\r\n/some text")]
         public void NextToken_MultilineComments_ReturnDefaultToken(string text)
         {
             _lexer.SetText(text);
@@ -101,6 +102,59 @@ namespace UnitTests.JavaCompiler
             Token def = Token.Default();
 
             Assert.Equal(def, token);
+
+            _lexer.ClearText();
+        }
+
+        [Theory]
+        [MemberData(nameof(CommentTextAndToken))]
+        public void NextToken_MultilineCommnets_TextAfterEndOfComment_ReturnValidToken(string comment, string text, Token validToken)
+        {
+            _lexer.SetText(string.Concat(comment, text));
+
+            Token token = _lexer.NextToken();
+
+            Assert.Equal(validToken, token);
+
+            _lexer.ClearText();
+        }
+
+        public static IEnumerable<object[]> CommentTextAndToken =>
+            new List<object[]>
+            {
+                new object[] {"/*comment*/", "class", new Token(Lexemes.TypeClassKeyWord, "class") },
+                new object[] {"/*comment*/", "final", new Token(Lexemes.TypeFinalKeyWord, "final") },
+                new object[] {"/*comment*/", "Main", new Token(Lexemes.TypeIdentifier, "Main") },
+                new object[] {"/*comment*/", "new", new Token(Lexemes.TypeNewKeyWord, "new") },
+                new object[] {"/*comment*/", "void", new Token(Lexemes.TypeVoidKeyWord, "void") },
+                new object[] {"/*comment*/", "45", new Token(Lexemes.TypeIntLiteral, "45") },
+                new object[] {"/*comment*/", "int", new Token(Lexemes.TypeIntKeyWord, "int") },
+                new object[] {"/*comment*/", "125.3", new Token(Lexemes.TypeDoubleLiteral, "125.3") },
+                new object[] {"/*comment*/", "true", new Token(Lexemes.TypeBooleanLiteral, "true") },
+                new object[] {"/*comment*/", "null", new Token(Lexemes.TypeNullLiteral, "null") },
+                new object[] {"/*comment*/", "double", new Token(Lexemes.TypeDoubleKeyWord, "double") },
+            };
+
+        [Fact]
+        public void SavePosition_RestorePosition_TwoTokensInText_SavePositionAfterFirstTokenAndRestoreAfterSecond_ReturnSecondToken()
+        {
+            string text = "class Main";
+
+            _lexer.SetText(text);
+
+            Token token = _lexer.NextToken();
+            Lexer.Position position = _lexer.SavePosition();
+            token = _lexer.NextToken();
+            Assert.Equal("Main", token.Value);
+
+            token = _lexer.NextToken();
+            Assert.Equal(Token.Default(), token);
+
+            _lexer.RestorePosition(position);
+
+            token = _lexer.NextToken();
+
+            Assert.Equal("Main", token.Value);
 
             _lexer.ClearText();
         }
