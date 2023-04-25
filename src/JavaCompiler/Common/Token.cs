@@ -15,6 +15,11 @@ namespace JavaCompiler.Common
             Lexeme = lexeme;
             Value = value;
         }
+        /// <summary>
+        /// Устанавливает значение токена по-умолчанию.
+        /// Значение по умолчанию: конец текста.
+        /// </summary>
+        /// <returns></returns>
         public static Token Default() => new Token(Lexemes.TypeEnd, "#");
 
         public override bool Equals(object? obj)
