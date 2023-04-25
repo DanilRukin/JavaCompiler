@@ -84,6 +84,7 @@ namespace JavaCompiler.Common
         /// <summary>
         /// Данный нетерминал не принадлежит таблице
         /// </summary>
-        Invalid
+        Invalid,
+        Identifier
     }
 }
