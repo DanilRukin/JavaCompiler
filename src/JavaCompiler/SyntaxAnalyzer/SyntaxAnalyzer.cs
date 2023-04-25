@@ -105,7 +105,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             else
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassBodyDeclaration });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassDeclaration });
                             }
                             break;
                         //ClassDeclaration:

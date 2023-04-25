@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MyJavaTest.Application.Commands
 {
-    public class TestCommand
+    public abstract class TestCommand
     {
         protected virtual string GetText(string fileName)
         {
@@ -26,5 +26,7 @@ namespace MyJavaTest.Application.Commands
             stream.Close();
             return builder.ToString();
         }
+
+        public abstract void Execute(string fileName);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using JavaCompiler.LexerAnalyzer;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyJavaTest.Application.Commands;
 using System;
@@ -12,15 +13,15 @@ namespace MyJavaTest.Application.TestRunner
 {
     public class Runner
     {
-        private IConfiguration _configuration;
+        private IServiceProvider _services;
         private ILogger _logger;
-        private Lexer _lexer;
+        private TestCommandsFactory _commandsFactory;
 
-        public Runner(Lexer lexer, IConfiguration configuration, ILogger logger)
+        public Runner(IServiceProvider services)
         {
-            _lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _services = services ?? throw new ArgumentNullException(nameof(services));
+            _logger = _services.GetRequiredService<ILogger>();
+            _commandsFactory = _services.GetRequiredService<TestCommandsFactory>();
         }
 
         public void Run(string[] commandLineArgs)
@@ -41,8 +42,7 @@ namespace MyJavaTest.Application.TestRunner
                                 $"Use '{Commands.RunFilesCommand}' instead.\r\n");
                         else
                         {
-                            var lexerCommand = new ExecuteLexerTestCommand(_lexer, _configuration, _logger);
-                            lexerCommand.Execute(commandLineArgs[1]);
+                            _commandsFactory.FromExtension(Extension(commandLineArgs[1]))?.Execute(commandLineArgs[1]);
                         }
                         break;
                     }
@@ -52,10 +52,11 @@ namespace MyJavaTest.Application.TestRunner
                             _logger.LogError($"Invalid parameters count for command '{Commands.RunFilesCommand}'. Count is {commandLineArgs.Length - 1}.\r\n");
                         else
                         {
-                            var lexerCommand = new ExecuteLexerTestCommand(_lexer, _configuration, _logger);
                             for (int i = 1; i < commandLineArgs.Length; i++)
                             {
-                                lexerCommand.Execute(commandLineArgs[i]);
+                                _commandsFactory
+                                    .FromExtension(Extension(commandLineArgs[i]))
+                                    ?.Execute(commandLineArgs[i]);
                             }
                         }
                         break;
@@ -68,13 +69,13 @@ namespace MyJavaTest.Application.TestRunner
                         {
                             string currentDir = Directory.GetCurrentDirectory();
                             _logger.LogInformation($"Reading current directory '{currentDir}' to find test files...\r\n");
-                            var lexerCommand = new ExecuteSeveralLexerTestsCommand(_lexer, _configuration, _logger);
-                            lexerCommand.Execute(currentDir);
+                            var testCommand = _services.GetRequiredService<ExecuteTestsInsideDirCommand>();
+                            testCommand.Execute(currentDir);
                         }
                         else
                         {
-                            var lexerCommand = new ExecuteSeveralLexerTestsCommand(_lexer, _configuration, _logger);
-                            lexerCommand.Execute(commandLineArgs[1]);
+                            var testCommand = _services.GetRequiredService<ExecuteTestsInsideDirCommand>();
+                            testCommand.Execute(commandLineArgs[1]);
                         }
                         break;
                     }
@@ -83,5 +84,7 @@ namespace MyJavaTest.Application.TestRunner
                     break;
             }
         }
+
+        private string Extension(string fileName) => fileName.Substring(fileName.LastIndexOf(".") + 1);
     }
 }

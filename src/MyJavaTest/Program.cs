@@ -1,7 +1,9 @@
 ﻿using JavaCompiler.LexerAnalyzer;
+using JavaCompiler.SyntaxAnalyzer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyJavaTest.Application.Commands;
 using MyJavaTest.Application.TestRunner;
 using Serilog;
 using System.Runtime.InteropServices.JavaScript;
@@ -25,6 +27,11 @@ namespace MyJavaTest
             .ConfigureServices((context, services) =>
             {
                 services.AddScoped<Lexer>()
+                .AddScoped<SyntaxAnalyzer>()
+                .AddScoped<TestCommandsFactory>()
+                .AddScoped<ExecuteLexerTestCommand>()
+                .AddScoped<ExecuteSyntaxAnalyzerTestCommand>()
+                .AddScoped<ExecuteTestsInsideDirCommand>()
                 .AddScoped<Runner>()
                 .AddSingleton(LoggerFactory.Create(logging => logging.AddSerilog()).CreateLogger("Logger"));
             })

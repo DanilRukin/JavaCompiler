@@ -1,4 +1,5 @@
-﻿using JavaCompiler.LexerAnalyzer;
+﻿using JavaCompiler.Common;
+using JavaCompiler.LexerAnalyzer;
 using JavaCompiler.SyntaxAnalyzer;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,19 @@ namespace UnitTests.JavaCompiler
             string text = "class { }";
             string message = "Ожидался идентификатор, но отсканирован символ '{'." +
                 $"Строка: 0, столбец: {text.IndexOf("{")}";
+            _analyzer.SetText(text);
+            var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
+            Assert.NotNull(error);
+            Assert.Equal(message, error.Message);
+            _analyzer.ClearText();
+        }
+
+        [Fact]
+        public void Analyze_ClassKeyWordMissed_ThrowsSyntaxErrorExceptionWithMessage()
+        {
+            string text = "Main { }";
+            string message = $"Ожидался символ: 'class', но отсканирован символ: 'Main'." +
+                                    $"Строка: 0, столбец: {text.IndexOf("Main") + "Main".Length}";
             _analyzer.SetText(text);
             var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
             Assert.NotNull(error);

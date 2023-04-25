@@ -1,6 +1,7 @@
 ﻿using JavaCompiler.Common;
 using JavaCompiler.LexerAnalyzer;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -12,33 +13,32 @@ namespace MyJavaTest.Application.Commands
 {
     public class ExecuteLexerTestCommand : TestCommand
     {
-        private Lexer _lexer;
-        private IConfiguration _configuration;
-        private ILogger _logger;
+        private IServiceProvider _serviceProvider;
 
-        public ExecuteLexerTestCommand(Lexer lexer, IConfiguration configuration, ILogger logger)
+        public ExecuteLexerTestCommand(IServiceProvider serviceProvider)
         {
-            _lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        public void Execute(string fileName)
+        public override void Execute(string fileName)
         {
-            if (fileName.Substring(fileName.LastIndexOf('.') + 1) == _configuration["LexerTestFileExtension"])
+            IConfiguration configuration = _serviceProvider.GetRequiredService<IConfiguration>();
+            ILogger logger = _serviceProvider.GetRequiredService<ILogger>();
+            Lexer lexer = _serviceProvider.GetRequiredService<Lexer>();
+            if (fileName.Substring(fileName.LastIndexOf('.') + 1) == configuration["LexerTestFileExtension"])
             {
                 string text = GetText(fileName);
-                _lexer.SetText(text);
-                _logger.LogInformation($"\\\\----------------Start testing '{fileName}'-------------------//\r\n");
-                _logger.LogInformation($"File content is:\r\n\r\n{text}\r\n\r\n");
+                lexer.SetText(text);
+                logger.LogInformation($"\\\\----------------Start testing '{fileName}'-------------------//\r\n");
+                logger.LogInformation($"File content is:\r\n\r\n{text}\r\n\r\n");
                 Token token;
-                while ((token = _lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
+                while ((token = lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
                 {
-                    _logger.LogInformation($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                    logger.LogInformation($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
                 }
-                _logger.LogInformation($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
-                _logger.LogInformation($"//----------------Test ends-------------------\\\\\r\n\r\n");
-                _lexer.ClearText();
+                logger.LogInformation($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                logger.LogInformation($"//----------------Test ends-------------------\\\\\r\n\r\n");
+                lexer.ClearText();
             }           
         }
     }
