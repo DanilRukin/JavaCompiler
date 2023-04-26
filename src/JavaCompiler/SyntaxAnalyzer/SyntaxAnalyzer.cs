@@ -183,6 +183,51 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
+                        //ClassMemberDeclaration:
+                        //    FieldDeclaration
+                        //    | MethodDeclaration
+                        //    | ClassDeclaration
+                        //    | ;
+                        case NonTerminals.ClassMemberDeclaration:
+                            if (token.Lexeme == Lexemes.TypeClassKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassDeclaration });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeVoidKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
+                                || token.Lexeme == Lexemes.TypeFinalKeyWord
+                                || token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                if (nextToken == Token.Default())
+                                    throw new SyntaxErrorException("Встречен конец файла");
+                                if (nextToken.Lexeme != Lexemes.TypeIdentifier)
+                                    throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
+                                        $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
+                                nextToken = _lexer.NextToken();
+                                if (nextToken == Token.Default())
+                                    throw new SyntaxErrorException("Встречен конец файла");
+                                if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // это метод
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
+                                }
+                                else // иначе, поле
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldDeclaration });
+                                }
+                                _lexer.RestorePosition(position);
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
                         default:
                             throw new SyntaxErrorException($"Неопределенная ошибка при анализе нетерминала...({data.NonTerminal})");
                     }
