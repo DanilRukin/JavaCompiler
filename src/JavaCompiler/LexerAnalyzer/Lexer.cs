@@ -45,6 +45,7 @@ namespace JavaCompiler.LexerAnalyzer
         {
             CurrentColumn = 0;
             CurrentRow = 0;
+            _currentPositionInText = 0;
             _text = text ?? throw new ArgumentNullException(nameof(text));
         }
 
@@ -52,6 +53,7 @@ namespace JavaCompiler.LexerAnalyzer
         {
             CurrentColumn = 0;
             CurrentRow = 0;
+            _currentPositionInText = 0;
             _text = string.Empty;
         }
 
@@ -83,6 +85,8 @@ namespace JavaCompiler.LexerAnalyzer
             while (!EndOfFile)
             {
                 SkipSimpleIgnorableSymbols();  // сначала простые символы
+                if (EndOfFile)  // значит, достигнут конец файла
+                    return;
                 _symbol = _text[_currentPositionInText];
                 if (_symbol == '/')  // комментарий, операция деления
                 {

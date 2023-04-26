@@ -1,6 +1,7 @@
 ﻿using JavaCompiler.Common;
 using JavaCompiler.LexerAnalyzer;
 using JavaCompiler.SyntaxAnalyzer;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace UnitTests.JavaCompiler
         public void Analyze_SimpleClassDeclaration_NoClassName_ThrowsSyntaxErrorExceptionWithMessage()
         {
             string text = "class { }";
-            string message = "Ожидался идентификатор, но отсканирован символ '{'." +
+            string message = "Ожидался идентификатор, но отсканирован символ: '{'. " +
                 $"Строка: 0, столбец: {text.IndexOf("{")}";
             _analyzer.SetText(text);
             var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
@@ -37,6 +38,31 @@ namespace UnitTests.JavaCompiler
             string text = "Main { }";
             string message = $"Ожидался символ: 'class', но отсканирован символ: 'Main'." +
                                     $"Строка: 0, столбец: {text.IndexOf("Main") + "Main".Length}";
+            _analyzer.SetText(text);
+            var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
+            Assert.NotNull(error);
+            Assert.Equal(message, error.Message);
+            _analyzer.ClearText();
+        }
+
+        [Fact]
+        public void Analyze_OpenCurlyBraceMissed_ThrowsSyntaxErrorExceptionWithMessage()
+        {
+            string text = "class Main }";
+            string message = "Ожидался символ: '{', но отсканирован символ: '}'." +
+                                    "Строка: 0, столбец: " + text.IndexOf("}");
+            _analyzer.SetText(text);
+            var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
+            Assert.NotNull(error);
+            Assert.Equal(message, error.Message);
+            _analyzer.ClearText();
+        }
+
+        [Fact]
+        public void Analyze_CloseCurlyBraceMissed_ThrowsSyntaxErrorExceptionWithMessage()
+        {
+            string text = "class Main {";
+            string message = $"Неверный символ '#'. Строка: 0, столбец: {text.Length - 1}";
             _analyzer.SetText(text);
             var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);
             Assert.NotNull(error);

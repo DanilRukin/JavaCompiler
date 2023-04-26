@@ -73,6 +73,7 @@ namespace UnitTests.JavaCompiler
         [InlineData("// void static hash")]
         [InlineData("// /**/")]
         [InlineData("// /*******///")]
+        [InlineData("// some text\r\n")]
         public void NextToken_SimpleComments_ReturnDefaultToken(string text)
         {
             _lexer.SetText(text);
@@ -94,6 +95,7 @@ namespace UnitTests.JavaCompiler
         [InlineData("/**hello*,world*/")]
         [InlineData("/**hello*,world*\r\nsome text class Main\r\n/")] // думаю, что можно считать допустимым такой комментарий, т.к. после него никакого кода
         [InlineData("/**hello*,world*\r\nsome text class Main\r\n/some text")]
+        [InlineData("/**hello*,world*\r\nsome text class Main\r\n/some text\r\n")]
         public void NextToken_MultilineComments_ReturnDefaultToken(string text)
         {
             _lexer.SetText(text);
@@ -155,6 +157,30 @@ namespace UnitTests.JavaCompiler
             token = _lexer.NextToken();
 
             Assert.Equal("Main", token.Value);
+
+            _lexer.ClearText();
+        }
+
+        [Fact]
+        public void NextToken_ClassDescriptionWithDifferentComments_ReturnValidTokens()
+        {
+            string text = "// simple comment\r\n/*class Main {}*/\r\nclass Main\r\n{\r\n// some comment\r\n}\r\n/*************fjksjgksdjksdjgkd*****/\r\n";
+            _lexer.SetText(text);
+
+            Token token = _lexer.NextToken();
+            Assert.Equal(new Token(Lexemes.TypeClassKeyWord, "class"), token);
+
+            token = _lexer.NextToken();
+            Assert.Equal(new Token(Lexemes.TypeIdentifier, "Main"), token);
+
+            token = _lexer.NextToken();
+            Assert.Equal(new Token(Lexemes.TypeOpenCurlyBrace, "{"), token);
+
+            token = _lexer.NextToken();
+            Assert.Equal(new Token(Lexemes.TypeCloseCurlyBrace, "}"), token);
+
+            token = _lexer.NextToken();
+            Assert.Equal(Token.Default(), token);
 
             _lexer.ClearText();
         }

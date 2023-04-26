@@ -63,9 +63,9 @@ namespace JavaCompiler.SyntaxAnalyzer
                 data = _mag.Pop();
                 if (data.IsTerminal)  // в верхушке магазина терминал
                 {
-                    if (token.Equals(data.Token)) // совпадение с отсканированным терминалом
+                    if (token.Lexeme == data.Token.Lexeme) // совпадение с отсканированным терминалом
                     {
-                        if (data.Token.Equals(Token.Default()))
+                        if (data.Token.Lexeme == Lexemes.TypeEnd)
                             analyze = false;
                         else
                         {
@@ -75,8 +75,12 @@ namespace JavaCompiler.SyntaxAnalyzer
                     else
                     {
                         // ошибка
-                        throw new SyntaxErrorException($"Ожидался символ: '{data.Token.Value}', но отсканирован символ: '{token.Value}'. " +
-                            $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                        if (data.Token.Lexeme == Lexemes.TypeIdentifier)
+                            throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован символ: '{token.Value}'. " +
+                                $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                        else
+                            throw new SyntaxErrorException($"Ожидался символ: '{data.Token.Value}', но отсканирован символ: '{token.Value}'. " +
+                                $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                     }
                 }
                 else
@@ -114,7 +118,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             if (token.Lexeme == Lexemes.TypeClassKeyWord)
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassBody });
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") }); // мы не знаем, какой именно идентификатор будет отсканирован
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeClassKeyWord, "class")});
                             }
                             else
@@ -123,13 +127,13 @@ namespace JavaCompiler.SyntaxAnalyzer
                                     $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        case NonTerminals.Identifier:
-                            if (token.Lexeme != Lexemes.TypeIdentifier)
-                            {
-                                throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован символ '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                            }
-                            break;
+                        //case NonTerminals.Identifier:
+                        //    if (token.Lexeme != Lexemes.TypeIdentifier)
+                        //    {
+                        //        throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован символ '{token.Value}'." +
+                        //            $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                        //    }
+                        //    break;
                         //ClassBody:
                         //    { ClassBodyDeclaration}
                         case NonTerminals.ClassBody:
@@ -176,7 +180,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             else
                             {
-                                throw new SyntaxErrorException($"Неверный символ '{token.Lexeme}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
                         default:
