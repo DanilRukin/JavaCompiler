@@ -19,6 +19,7 @@ namespace JavaCompiler.Common
         ClassMemberDeclaration,
         FieldDeclaration,
         VariableDeclaratorList,
+        VariableDeclaratorList_1,
         VariableDeclarator,
         MethodDeclaration,
         MethodHeader,

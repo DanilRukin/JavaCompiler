@@ -3,6 +3,7 @@ using JavaCompiler.LexerAnalyzer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -226,6 +227,194 @@ namespace JavaCompiler.SyntaxAnalyzer
                             else
                             {
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //FieldDeclaration:
+                        //    Type VariableDeclaratorList;
+                        //    | final Type VariableDeclaratorList;
+                        case NonTerminals.FieldDeclaration:
+                            if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
+                                || token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeFinalKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeFinalKeyWord, "final") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //VariableDeclaratorList:
+                        //    VariableDeclarator VariableDeclaratorList_1
+                        case NonTerminals.VariableDeclaratorList:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList_1});
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator});
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
+                                        $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
+                            }
+                            break;
+                        //VariableDeclaratorList_1:
+                        //    , VariableDeclarator VariableDeclaratorList_1
+                        //    | eps
+                        case NonTerminals.VariableDeclaratorList_1:
+                            if (token.Lexeme == Lexemes.TypeComma)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeComma, ",") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeSemicolon)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException("Ожидался символ: ',', но отсканирован символ: '" + token.Value + "'." +
+                                    "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
+                            }
+                            break;
+                        //VariableDeclarator:
+                        //    Identifier
+                        //    | Identifier = Expression
+                        case NonTerminals.VariableDeclarator:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                Lexer.Position position = _lexer.SavePosition(); // проверяем, содержит ли данное объявление выражение
+                                Token nextToken = _lexer.NextToken();
+                                if (nextToken.Lexeme == Lexemes.TypeAssignmentSign)  // содержит выражение
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                }
+                                else // не содержит выражение
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                }
+                                _lexer.RestorePosition(position);
+                            }
+                            break;
+                        //MethodDeclaration:
+                        //    MethodHeader MethodBody
+                        case NonTerminals.MethodDeclaration:
+                            if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
+                                || token.Lexeme == Lexemes.TypeVoidKeyWord
+                                || token.Lexeme == Lexemes.TypeFinalKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodBody });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodHeader });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //MethodHeader:
+                        //    ResultType MethodDeclarator
+                        //    | final ResultType MethodDeclarator
+                        case NonTerminals.MethodHeader:
+                            if (token.Lexeme == Lexemes.TypeFinalKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclarator });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ResultType });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeFinalKeyWord, "final") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeVoidKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclarator });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ResultType });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //ResultType:
+                        //    Type
+                        //    | void
+                        case NonTerminals.ResultType:
+                            if (token.Lexeme == Lexemes.TypeVoidKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeVoidKeyWord, "void") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
+                                || token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //MethodDeclarator:
+                        //    Identifier()
+                        case NonTerminals.MethodDeclarator:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, Token = new Token(Lexemes.TypeIdentifier, "") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException("Ожидалось имя метода, но отсканирован символ: '" + token.Value + "'." +
+                                    "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
+                            }
+                            break;
+                        //MethodBody:
+                        //    Block
+                        //    | ;
+                        case NonTerminals.MethodBody:
+                            if (token.Lexeme == Lexemes.TypeOpenCurlyBrace)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Block });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeSemicolon)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException("Ожидался символ '{' или ';', но отсканирован символ: '" + token.Value + "'." +
+                                    "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
+                            }
+                            break;
+                        //ConstructorDeclaration:
+                        //    Identifier() Block
+                        case NonTerminals.ConstructorDeclaration:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, Token = new Token(Lexemes.TypeIdentifier, "") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException("Ожидалося конструктор, но отсканирован символ: '" + token.Value + "'." +
+                                    "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
                             }
                             break;
                         default:
