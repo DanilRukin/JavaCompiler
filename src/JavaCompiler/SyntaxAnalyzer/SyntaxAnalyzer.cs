@@ -2,6 +2,7 @@
 using JavaCompiler.LexerAnalyzer;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
@@ -680,6 +681,82 @@ namespace JavaCompiler.SyntaxAnalyzer
                             {
                                 throw new SyntaxErrorException($"Ожидался символ: 'return', но отсканирован символ: '{token.Value}'." +
                                     $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //ClassInstanceCreationExpression:
+                        //    UnqualifiedClassInstanceCreationExpression
+                        //    | ExpressionName.UnqualifiedClassInstanceCreationExpression
+                        //    | Primary.UnqualifiedClassInstanceCreationExpression
+                        case NonTerminals.ClassInstanceCreationExpression:
+                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                // ExpressionName выкину
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Primary });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался символ: 'new' или идентификатор, но отсканирован символ: '{token.Value}'." +
+                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //UnqualifiedClassInstanceCreationExpression:
+                        //    new Identifier()
+                        case NonTerminals.UnqualifiedClassInstanceCreationExpression:
+                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeNewKeyWord, "new") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался символ: 'new', но отсканирован символ: '{token.Value}'." +
+                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //FieldAccess:
+                        //    Primary.Identifier
+                        case NonTerminals.FieldAccess:
+                            if (token.Lexeme == Lexemes.TypeIdentifier
+                                || token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Primary });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //Primary:
+                        //    Literal
+                        //    | TypeName
+                        //    | FieldAccess
+                        //    | ClassInstanceCreationExpression
+                        //    | MethodInvocation
+                        case NonTerminals.Primary:
+                            if (token.Lexeme == Lexemes.TypeNullLiteral
+                                || token.Lexeme == Lexemes.TypeBooleanLiteral)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Literal });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression });
+                            }
+                            else
+                            {
+                                // TODO: устранить левую рекурсию, связанную с Primary (FieldAccess)
                             }
                             break;
                         default:
