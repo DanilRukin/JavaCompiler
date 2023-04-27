@@ -516,7 +516,170 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             else // что делаем со Statement?
                             {
-
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Statement });
+                            }
+                            break;
+                        //LocalVariableDeclaration:
+                        //    Type VariableDeclaratorList
+                        //    | final Type VariableDeclaratorList
+                        case NonTerminals.LocalVariableDeclaration:
+                            if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
+                                || token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeFinalKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclaratorList });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeFinalKeyWord, "final") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //Statement:
+                        //    WhileStatement
+                        //    | Block
+                        //    | ;
+                        //    | ExpressionStatement
+                        //    | ReturnStatement
+                        case NonTerminals.Statement:
+                            if (token.Lexeme == Lexemes.TypeWhileKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.WhileStatement });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeReturnKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ReturnStatement });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeSemicolon)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeOpenCurlyBrace)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Block });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIncrement
+                                || token.Lexeme == Lexemes.TypeDecrement
+                                || token.Lexeme == Lexemes.TypeIdentifier
+                                || token.Lexeme == Lexemes.TypeNewKeyWord
+                                || token.Lexeme == Lexemes.TypeOpenParenthesis
+                                || token.Lexeme == Lexemes.TypeMult
+                                || token.Lexeme == Lexemes.TypeDiv
+                                || token.Lexeme == Lexemes.TypeMod
+                                || token.Lexeme == Lexemes.TypeLessSign
+                                || token.Lexeme == Lexemes.TypeLessOrEqualSign
+                                || token.Lexeme == Lexemes.TypeMoreSign
+                                || token.Lexeme == Lexemes.TypeMoreOrEqualSign
+                                || token.Lexeme == Lexemes.TypeEqualSign
+                                || token.Lexeme == Lexemes.TypeNotEqualSign)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ExpressionStatement });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //ExpressionStatement:
+                        //    StatementExpression;
+                        case NonTerminals.ExpressionStatement:
+                            if (token.Lexeme == Lexemes.TypeIncrement
+                                || token.Lexeme == Lexemes.TypeDecrement
+                                || token.Lexeme == Lexemes.TypeIdentifier
+                                || token.Lexeme == Lexemes.TypeNewKeyWord
+                                || token.Lexeme == Lexemes.TypeOpenParenthesis)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.StatementExpression });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //StatementExpression:
+                        //    Assignment
+                        //    | PreIncrementExpression
+                        //    | PreDecrementExpression
+                        //    | PostIncrementExpression
+                        //    | PostDecrementExpression
+                        //    | MethodInvocation
+                        //    | ClassInstanceCreationExpression
+                        case NonTerminals.StatementExpression:
+                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIncrement)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PreIncrementExpression });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeDecrement)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PreDecrementExpression });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                // TODO: придумать, что делать с PostIncrementExpression, PostDecrementExpression, MethodInvocation, Assignment
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        //WhileStatement:
+                        //    while (Expression) Statement
+                        case NonTerminals.WhileStatement:
+                            if (token.Lexeme == Lexemes.TypeWhileKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Statement });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeWhileKeyWord, "while") });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException("Ожидался символ 'while', но отсканирован символ: '" + token.Value + "'." +
+                                    "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
+                            }
+                            break;
+                        //ReturnStatement:
+                        //    return;
+                        //    | return Expression;
+                        case NonTerminals.ReturnStatement:
+                            if (token.Lexeme == Lexemes.TypeReturnKeyWord)
+                            {
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                if (nextToken.Lexeme == Lexemes.TypeEnd)
+                                {
+                                    throw new SyntaxErrorException("Встречен конец файла");
+                                }
+                                if (nextToken.Lexeme == Lexemes.TypeSemicolon)
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeReturnKeyWord, "return") });
+                                }
+                                else
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeReturnKeyWord, "return") });
+                                }
+                                _lexer.RestorePosition(position);
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался символ: 'return', но отсканирован символ: '{token.Value}'." +
+                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
                         default:
