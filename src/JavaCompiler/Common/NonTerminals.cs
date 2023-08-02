@@ -37,6 +37,7 @@ namespace JavaCompiler.Common
         WhileStatement,
         ReturnStatement,
         ClassInstanceCreationExpression,
+        ClassInstanceCreationExpression_1,
         UnqualifiedClassInstanceCreationExpression,
         FieldAccess,
         Primary,

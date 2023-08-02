@@ -684,24 +684,68 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             break;
                         //ClassInstanceCreationExpression:
-                        //    UnqualifiedClassInstanceCreationExpression
-                        //    | ExpressionName.UnqualifiedClassInstanceCreationExpression
-                        //    | Primary.UnqualifiedClassInstanceCreationExpression
+                        //    | UnqualifiedClassInstanceCreationExpression ClassInstanceCreationExpression_1
+                        //    | ExpressionName ClassInstanceCreationExpression_1
+                        //    | Literal ClassInstanceCreationExpression_1
+                        //    | TypeName ClassInstanceCreationExpression_1
+                        //    | FieldAccess ClassInstanceCreationExpression_1
+                        //    | MethodInvocation ClassInstanceCreationExpression_1
                         case NonTerminals.ClassInstanceCreationExpression:
                             if (token.Lexeme == Lexemes.TypeNewKeyWord)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeBooleanLiteral
+                                || token.Lexeme == Lexemes.TypeDoubleLiteral
+                                || token.Lexeme == Lexemes.TypeIntLiteral)
+                            {
+                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
+                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.Literal });
                             }
                             else if (token.Lexeme == Lexemes.TypeIdentifier)
                             {
-                                // ExpressionName выкину
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Primary });
+                                // TODO: ExpressionName выкинуть
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                if (nextToken == Token.Default())
+                                    throw new SyntaxErrorException($"Встречен конец файла. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // вызов метода
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodInvocation });
+                                }
+                                else // либо имя TypeName, либо FieldAccees, либо ExpressionName - это уже семантика
+                                {
+                                    // TODO: на уровне семантики определить что это такое, пока что буду использовать FieldAccees
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess });
+                                }
+                                _lexer.RestorePosition(position);
                             }
                             else
                             {
                                 throw new SyntaxErrorException($"Ожидался символ: 'new' или идентификатор, но отсканирован символ: '{token.Value}'." +
+                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        // ClassInstanceCreationExpression_1:
+                        //  | .UnqualifiedClassInstanceCreationExpression ClassInstanceCreationExpression_1
+                        //  | eps
+                        case NonTerminals.ClassInstanceCreationExpression_1:
+                            if (token.Lexeme == Lexemes.TypeDot)
+                            {
+                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
+                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
+                                _mag.Push(new SyntaxData { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeSemicolon)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался символ: '.' или ';', но отсканирован символ: '{token.Value}'." +
                                     $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
@@ -722,7 +766,10 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             break;
                         //FieldAccess:
-                        //    Primary.Identifier
+                        //  Literal FieldAccess_1
+                        //  | TypeName FieldAccess_1
+                        //  | ClassInstanceCreationExpression FieldAccess_1
+                        //  | MethodInvocation FieldAccess_1
                         case NonTerminals.FieldAccess:
                             if (token.Lexeme == Lexemes.TypeIdentifier
                                 || token.Lexeme == Lexemes.TypeIntKeyWord
