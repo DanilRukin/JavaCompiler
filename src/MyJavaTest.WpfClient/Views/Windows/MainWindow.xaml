@@ -1,0 +1,114 @@
+﻿<Window x:Class="MyJavaTest.WpfClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MyJavaTest.WpfClient"
+        mc:Ignorable="d"
+        Title="{Binding Title}" Height="650" Width="1200
+        "
+        DataContext="{Binding MainWindowModel, Source={StaticResource Locator}}">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserSortColumns" Value="True"/>
+            <Setter Property="VerticalGridLinesBrush" Value="BlueViolet"/>
+            <Setter Property="GridLinesVisibility" Value="Vertical"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Settings"/>
+                <MenuItem Header="Close" Command="{StaticResource CloseWindowCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Help"/>
+        </Menu>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem Content="{Binding Status}"/>
+        </StatusBar>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" MinWidth="450"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" MinWidth="450">
+                <DockPanel Margin="5, 15" DockPanel.Dock="Top">
+                    <Button DockPanel.Dock="Right" Content="..." Margin="5, 0, 0, 0" Width="25" MinWidth="25"/>
+                    <TextBox MinWidth="350"/>
+                </DockPanel>
+                <UniformGrid DockPanel.Dock="Bottom" Margin="0, 5">
+                    <Button Content="Тестировать выбранный"/>
+                    <Button Content="Тестировать все"/>
+                    <Button Content="Сбросить результат"/>
+                    <Button Content="Сбросить результаты"/>
+                    <Button Content="Очистить"/>
+                    <Button Content="Перезагрузить"/>
+                </UniformGrid>
+                <GroupBox Header="Загруженные файлы" Margin="5">
+                    <DataGrid Margin="0, 5, 0, 0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Имя файла" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </DockPanel>
+            <GridSplitter Grid.Column="1" Width="3" Background="Black" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
+            <DockPanel Grid.Column="2" Margin="5">
+                <GroupBox Header="Вариант тестирования" DockPanel.Dock="Top">
+                    <WrapPanel>
+                        <WrapPanel.Resources>
+                            <Style TargetType="RadioButton">
+                                <Setter Property="Margin" Value="5"/>
+                            </Style>
+                        </WrapPanel.Resources>
+                        <RadioButton Content="Лексический анализатор"/>
+                        <RadioButton Content="Синтаксический анализатор"/>
+                        <RadioButton Content="Семантический анализатор"/>
+                    </WrapPanel>
+                </GroupBox>
+                <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
+                    <WrapPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="5, 0"/>
+                        </Style>
+                    </WrapPanel.Resources>
+                    <TextBlock Text="Отсканировано:"/>
+                    <TextBlock Text="Binding"/>
+                    <TextBlock Text="из"/>
+                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="." Margin="0"/>
+                    <TextBlock Text="Без ошибок -"/>
+                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="," Margin="0"/>
+                    <TextBlock Text="С ошибками -"/>
+                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="." Margin="0"/>
+                </WrapPanel>
+                <TabControl>
+                    <TabItem Header="Содержимое файла">
+                        <TextBlock Text="Binding"/>
+                    </TabItem>
+                    <TabItem Header="Результаты тестирования">
+                        <DockPanel>
+                            <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
+                                <TextBlock Text="Тестируемый файл:" Margin="0, 0, 5, 0"/>
+                                <TextBlock Text="Binding"/>
+                            </WrapPanel>
+                            <ListBox Margin="0, 5">
+                                
+                            </ListBox>
+                        </DockPanel>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>
