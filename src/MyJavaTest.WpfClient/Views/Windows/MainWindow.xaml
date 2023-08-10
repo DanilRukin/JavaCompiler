@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MyJavaTest.WpfClient"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="650" Width="1200
-        "
-        DataContext="{Binding MainWindowModel, Source={StaticResource Locator}}">
+        xmlns:converters="clr-namespace:MyJavaTest.WpfClient.Infrastructure.Converters"
+        xmlns:vm="clr-namespace:MyJavaTest.WpfClient.ViewModels"
+        Title="{Binding Title}" Height="650" Width="1200"
+        d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="MinWidth" Value="120"/>
@@ -41,8 +42,11 @@
             </Grid.ColumnDefinitions>
             <DockPanel Grid.Column="0" MinWidth="450">
                 <DockPanel Margin="5, 15" DockPanel.Dock="Top">
-                    <Button DockPanel.Dock="Right" Content="..." Margin="5, 0, 0, 0" Width="25" MinWidth="25"/>
-                    <TextBox MinWidth="350"/>
+                    <Button DockPanel.Dock="Right" Content="..." Margin="5, 0, 0, 0" Width="25" MinWidth="25" VerticalAlignment="Bottom"/>
+                    <StackPanel>
+                        <TextBlock Text="Директория с тестами" Margin="0, 0, 0, 5"/>
+                        <TextBox MinWidth="350" Height="20" Text="{Binding DirectoryPath, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                 </DockPanel>
                 <UniformGrid DockPanel.Dock="Bottom" Margin="0, 5">
                     <Button Content="Тестировать выбранный"/>
@@ -53,9 +57,11 @@
                     <Button Content="Перезагрузить"/>
                 </UniformGrid>
                 <GroupBox Header="Загруженные файлы" Margin="5">
-                    <DataGrid Margin="0, 5, 0, 0">
+                    <DataGrid Margin="0, 5, 0, 0" ItemsSource="{Binding TestFiles}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Имя файла" Width="*"/>
+                            <DataGridTextColumn Header="Имя файла" Width="*" Binding="{Binding FileName}"/>
+                            <DataGridTextColumn Header="Тип теста" Width="*" Binding="{Binding TestFileType}"/>
+                            <DataGridTextColumn Header="Статус" Width="*" Binding="{Binding TestStatus}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </GroupBox>
@@ -69,9 +75,9 @@
                                 <Setter Property="Margin" Value="5"/>
                             </Style>
                         </WrapPanel.Resources>
-                        <RadioButton Content="Лексический анализатор"/>
-                        <RadioButton Content="Синтаксический анализатор"/>
-                        <RadioButton Content="Семантический анализатор"/>
+                        <RadioButton Content="Лексический анализатор" IsChecked="{Binding TestVariantLexer}"/>
+                        <RadioButton Content="Синтаксический анализатор" IsChecked="{Binding TestVariantSyntax}"/>
+                        <RadioButton Content="Семантический анализатор" IsChecked="{Binding TestVariantSemantic}"/>
                     </WrapPanel>
                 </GroupBox>
                 <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
@@ -81,20 +87,20 @@
                         </Style>
                     </WrapPanel.Resources>
                     <TextBlock Text="Отсканировано:"/>
-                    <TextBlock Text="Binding"/>
+                    <TextBlock Text="{Binding TotalTested, Converter={converters:IntToStringConverter}}"/>
                     <TextBlock Text="из"/>
-                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="{Binding TestFiles.Count}" Margin="5, 0, 0, 0"/>
                     <TextBlock Text="." Margin="0"/>
                     <TextBlock Text="Без ошибок -"/>
-                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="{Binding TestedWithoutErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
                     <TextBlock Text="," Margin="0"/>
                     <TextBlock Text="С ошибками -"/>
-                    <TextBlock Text="Binding" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="{Binding TestedWithErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
                     <TextBlock Text="." Margin="0"/>
                 </WrapPanel>
                 <TabControl>
                     <TabItem Header="Содержимое файла">
-                        <TextBlock Text="Binding"/>
+                        <TextBlock Text="{Binding fileco}"/>
                     </TabItem>
                     <TabItem Header="Результаты тестирования">
                         <DockPanel>

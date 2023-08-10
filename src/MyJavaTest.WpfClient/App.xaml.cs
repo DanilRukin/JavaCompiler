@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MyJavaTest.WpfClient.Models.Services;
+using MyJavaTest.WpfClient.Services.Dialogs;
 using MyJavaTest.WpfClient.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -21,24 +21,39 @@ namespace MyJavaTest.WpfClient
 
         public static Window ActivedWindow => Current.Windows.Cast<Window>().FirstOrDefault(w => w.IsActive);
 
-        private static IHost _host;
+        private IHost _host;
 
-        public static IHost Host => _host ??= Program.CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
+        public App()
+        {
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices(ConfigureServices)
+                .Build();
+        }
 
-        public static IServiceProvider Services => Host.Services;
+        private void ConfigureServices(HostBuilderContext host, IServiceCollection services)
+        {
+            services.AddTransient<IFolderBrowserDialog, FolderBrowserDialog>();
+            services.AddTransient<MainWindowViewModel>();
+            services.AddTransient(
+                s =>
+                {
+                    var scope = s.CreateScope();
+                    var model = scope.ServiceProvider.GetRequiredService<MainWindowViewModel>();
+                    var window = new MainWindow { DataContext = model };
+                    model.DialogComplete += (_, _) => window.Close();
+                    window.Closed += (_, _) => scope.Dispose();
 
-        public static void ConfigureServices(HostBuilderContext host, IServiceCollection services) => services
-           .AddServices()
-           .AddViewModels()
-        ;
+                    return window;
+                });
+        }
 
         protected override async void OnStartup(StartupEventArgs e)
         {
-            var host = Host;
-
             base.OnStartup(e);
+            await _host.StartAsync();
 
-            await host.StartAsync();
+            var window = _host.Services.GetRequiredService<MainWindow>();
+            window.Show();
 
         }
 
@@ -46,7 +61,7 @@ namespace MyJavaTest.WpfClient
         {
             base.OnExit(e);
 
-            using (Host) await Host.StopAsync();
+            using (_host) await _host.StopAsync();
         }
     }
 }
