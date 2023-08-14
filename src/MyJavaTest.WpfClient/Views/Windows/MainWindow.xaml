@@ -49,12 +49,12 @@
                     </StackPanel>
                 </DockPanel>
                 <UniformGrid DockPanel.Dock="Bottom" Margin="0, 5">
-                    <Button Content="Тестировать выбранный"/>
-                    <Button Content="Тестировать все"/>
-                    <Button Content="Сбросить результат"/>
-                    <Button Content="Сбросить результаты"/>
-                    <Button Content="Очистить"/>
-                    <Button Content="Перезагрузить"/>
+                    <Button Content="Тестировать выбранный" Command="{Binding TestSelectedFileCommand}"/>
+                    <Button Content="Тестировать все" Command="{Binding TestFilesCommand}"/>
+                    <Button Content="Сбросить результат" Command="{Binding DropResultCommand}"/>
+                    <Button Content="Сбросить результаты" Command="{Binding DropAllResultsCommand}"/>
+                    <Button Content="Очистить" Command="{Binding ClearTableCommand}"/>
+                    <Button Content="Перезагрузить" Command="{Binding ReloadFilesCommand}"/>
                 </UniformGrid>
                 <GroupBox Header="Загруженные файлы" Margin="5">
                     <DataGrid Margin="0, 5, 0, 0" ItemsSource="{Binding TestFiles}">

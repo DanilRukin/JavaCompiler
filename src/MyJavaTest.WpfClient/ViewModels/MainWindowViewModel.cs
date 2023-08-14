@@ -4,6 +4,7 @@ using MyJavaTest.WpfClient.ViewModels.Base;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Security.RightsManagement;
 using System.Text;
 using System.Windows.Input;
@@ -18,6 +19,12 @@ namespace MyJavaTest.WpfClient.ViewModels
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new LambdaCommand(OnChooseFolderCommandExecuted, CanChooseFolderCommandExecute);
+            TestSelectedFileCommand = new LambdaCommand(OnTestSelectedFileCommandExecuted, CanTestSelectedFileCommandExecute);
+            TestFilesCommand = new LambdaCommand(OnTestFilesCommandExecuted, CanTestFilesCommandExecute);
+            DropResultCommand = new LambdaCommand(OnDropResultCommandExecuted, CanDropResultCommandExecute);
+            DropAllResultsCommand = new LambdaCommand(OnDropAllResultsCommandExecuted, CanDropAllResultsCommandExecute);
+            ClearTableCommand = new LambdaCommand(OnClearTableCommandExecuted, CanClearTableCommandExecute);
+            ReloadFilesCommand = new LambdaCommand(OnReloadFilesCommandExecuted, CanReloadFilesCommandExecute);
         }
 
         public MainWindowViewModel(IFolderBrowserDialog folderBrowserDialog) : this()
@@ -74,6 +81,8 @@ namespace MyJavaTest.WpfClient.ViewModels
 
         public ObservableCollection<TestFileViewModel> TestFiles { get; private set; } = new ObservableCollection<TestFileViewModel>();
 
+        private TestFileViewModel _selectedFile = null;
+        public TestFileViewModel SelectedFile { get => _selectedFile; set => Set(ref _selectedFile, value); }
 
         #endregion
 
@@ -88,6 +97,62 @@ namespace MyJavaTest.WpfClient.ViewModels
             }
         }
         private bool CanChooseFolderCommandExecute(object p) => true;
+        #endregion
+
+        #region TestSelectedFileCommand
+        public ICommand TestSelectedFileCommand { get; }
+        private void OnTestSelectedFileCommandExecuted(object p)
+        {
+            
+        }
+        private bool CanTestSelectedFileCommandExecute(object p) => SelectedFile is not null;
+        #endregion
+
+        #region TestFilesCommand
+        public ICommand TestFilesCommand { get; }
+        private void OnTestFilesCommandExecuted(object p)
+        {
+
+        }
+        private bool CanTestFilesCommandExecute(object p) => TestFiles.Any();
+        #endregion
+
+        #region DropResultCommand
+        public ICommand DropResultCommand { get; }
+        private void OnDropResultCommandExecuted(object p)
+        {
+
+        }
+        private bool CanDropResultCommandExecute(object p) => SelectedFile is not null 
+            && SelectedFile.TestStatus is not Models.TestStatus.NotTested;
+        #endregion
+
+        #region DropAllResultsCommand
+        public ICommand DropAllResultsCommand { get; }
+        private void OnDropAllResultsCommandExecuted(object p)
+        {
+
+        }
+        private bool CanDropAllResultsCommandExecute(object p) => TestFiles.Any() 
+            && TestFiles.FirstOrDefault(f => f.TestStatus == Models.TestStatus.NotTested) is not default(TestFileViewModel);
+        #endregion
+
+        #region ClearTableCommand
+        public ICommand ClearTableCommand { get; }
+        private void OnClearTableCommandExecuted(object p)
+        {
+
+        }
+        private bool CanClearTableCommandExecute(object p) => TestFiles.Any();
+        #endregion
+
+        #region ReloadFilesCommand
+        public ICommand ReloadFilesCommand { get; }
+        private void OnReloadFilesCommandExecuted(object p)
+        {
+
+        }
+        private bool CanReloadFilesCommandExecute(object p) => !string.IsNullOrWhiteSpace(DirectoryPath);
         #endregion
         #endregion
     }

@@ -1,4 +1,5 @@
-﻿using MyJavaTest.WpfClient.ViewModels.Base;
+﻿using MyJavaTest.WpfClient.Models;
+using MyJavaTest.WpfClient.ViewModels.Base;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,8 +17,8 @@ namespace MyJavaTest.WpfClient.ViewModels
         private string _testFileType;
         public string TestFileType { get => _testFileType; set => Set(ref _testFileType, value); }
 
-        private string _testStatus;
-        public string TestStatus { get => _testStatus; set => Set(ref _testStatus, value); }
+        private TestStatus _testStatus;
+        public TestStatus TestStatus { get => _testStatus; set => Set(ref _testStatus, value); }
 
         private Color _testStatusColor = Color.Black;
         public Color TestStatusColor { get => _testStatusColor; set => Set(ref _testStatusColor, value); }
