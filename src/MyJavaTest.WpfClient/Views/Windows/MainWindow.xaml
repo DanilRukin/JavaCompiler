@@ -100,15 +100,15 @@
                 </WrapPanel>
                 <TabControl>
                     <TabItem Header="Содержимое файла">
-                        <TextBlock Text="{Binding fileco}"/>
+                        <TextBlock Text="{Binding SelectedFile.FileContent}"/>
                     </TabItem>
                     <TabItem Header="Результаты тестирования">
                         <DockPanel>
                             <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
                                 <TextBlock Text="Тестируемый файл:" Margin="0, 0, 5, 0"/>
-                                <TextBlock Text="Binding"/>
+                                <TextBlock Text="{Binding SelectedFile.FileName}"/>
                             </WrapPanel>
-                            <ListBox Margin="0, 5">
+                            <ListBox Margin="0, 5" ItemsSource="{Binding SelectedFile.TestLog}">
                                 
                             </ListBox>
                         </DockPanel>

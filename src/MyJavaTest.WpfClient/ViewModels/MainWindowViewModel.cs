@@ -1,14 +1,22 @@
-﻿using MyJavaTest.WpfClient.Infrastructure.Commands;
+﻿using JavaCompiler.Common;
+using JavaCompiler.LexerAnalyzer;
+using JavaCompiler.SyntaxAnalyzer;
+using MediatR;
+using MyJavaTest.WpfClient.Infrastructure.Commands;
+using MyJavaTest.WpfClient.Models.Services.Interfaces;
 using MyJavaTest.WpfClient.Services.Dialogs;
 using MyJavaTest.WpfClient.ViewModels.Base;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Security.RightsManagement;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Markup;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MyJavaTest.WpfClient.ViewModels
 {
@@ -16,6 +24,9 @@ namespace MyJavaTest.WpfClient.ViewModels
     public class MainWindowViewModel : ViewModel
     {
         private IFolderBrowserDialog _folderBrowserDialog;
+        private ITestFactory _testFactory;
+        private Lexer _lexer;
+        private SyntaxAnalyzer _syntaxAnalyzer;
         public MainWindowViewModel()
         {
             ChooseFolderCommand = new LambdaCommand(OnChooseFolderCommandExecuted, CanChooseFolderCommandExecute);
@@ -27,9 +38,12 @@ namespace MyJavaTest.WpfClient.ViewModels
             ReloadFilesCommand = new LambdaCommand(OnReloadFilesCommandExecuted, CanReloadFilesCommandExecute);
         }
 
-        public MainWindowViewModel(IFolderBrowserDialog folderBrowserDialog) : this()
+        public MainWindowViewModel(IFolderBrowserDialog folderBrowserDialog, ITestFactory testFactory, SyntaxAnalyzer syntaxAnalyzer, Lexer lexer) : this()
         {
             _folderBrowserDialog = folderBrowserDialog;
+            _testFactory = testFactory;
+            _syntaxAnalyzer = syntaxAnalyzer;
+            _lexer = lexer;
         }
 
         #region Properties
@@ -45,9 +59,6 @@ namespace MyJavaTest.WpfClient.ViewModels
 
         private string _directoryPath = string.Empty;
         public string DirectoryPath { get => _directoryPath; set => Set(ref _directoryPath, value);}
-
-        private string _fileContent = string.Empty;
-        public string FileContent { get => _fileContent; set => Set(ref _fileContent, value); }
 
         private int _totalTested = 0;
         public int TotalTested { get => _totalTested; set => Set(ref _totalTested, value); }
@@ -94,6 +105,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             if (_folderBrowserDialog.ShowDialog() == true)
             {
                 DirectoryPath = _folderBrowserDialog.SelectedPath;
+                LoadTests();
             }
         }
         private bool CanChooseFolderCommandExecute(object p) => true;
@@ -155,5 +167,62 @@ namespace MyJavaTest.WpfClient.ViewModels
         private bool CanReloadFilesCommandExecute(object p) => !string.IsNullOrWhiteSpace(DirectoryPath);
         #endregion
         #endregion
+
+
+        private void LoadTests()
+        {
+            if (!string.IsNullOrWhiteSpace(DirectoryPath))
+            {
+                if (Directory.Exists(DirectoryPath))
+                {
+                    TestFiles.Clear();
+                    var files = Directory.GetFiles(DirectoryPath);
+                    var tests = _testFactory.GetTests(files);
+                    foreach (var test in tests)
+                    {
+                        TestFiles.Add(test);
+                    }
+                }
+            }
+        }
+
+        private void ExecuteLexerTest(TestFileViewModel test)
+        {
+            try
+            {
+                string text = test.FileContent;
+                _lexer.SetText(text);
+                Token token;
+                while ((token = _lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
+                {
+                    test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                }
+                test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                _lexer.ClearText();
+            }
+            catch (Exception e)
+            {
+                test.TestLog.Add($"Error: {e.Message}");
+                test.TestStatus = Models.TestStatus.Error;
+                test.TestStatusColor = Color.Red;
+            }
+        }
+
+        private void ExecuteSyntaxTest(TestFileViewModel test)
+        {
+            try
+            {
+                string text = test.FileContent;
+                _syntaxAnalyzer.SetText(text);
+                _syntaxAnalyzer.Analyze();
+                _syntaxAnalyzer.ClearText();
+            }
+            catch (Exception e)
+            {
+                test.TestLog.Add($"Error: {e.Message}");
+                test.TestStatus = Models.TestStatus.Error;
+                test.TestStatusColor = Color.Red;
+            }
+        }
     }
 }
