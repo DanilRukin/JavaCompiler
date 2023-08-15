@@ -115,7 +115,10 @@ namespace MyJavaTest.WpfClient.ViewModels
         public ICommand TestSelectedFileCommand { get; }
         private void OnTestSelectedFileCommandExecuted(object p)
         {
-            
+            if (SelectedFile.TestFileType == Models.TestFileType.LexerTest)
+                ExecuteLexerTest(SelectedFile);
+            else if (SelectedFile.TestFileType == Models.TestFileType.SyntaxTest)
+                ExecuteSyntaxTest(SelectedFile);
         }
         private bool CanTestSelectedFileCommandExecute(object p) => SelectedFile is not null;
         #endregion
