@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Security.RightsManagement;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Markup;
 using static System.Net.Mime.MediaTypeNames;
@@ -105,7 +106,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             if (_folderBrowserDialog.ShowDialog() == true)
             {
                 DirectoryPath = _folderBrowserDialog.SelectedPath;
-                LoadTests();
+                LoadTestsAsync();
             }
         }
         private bool CanChooseFolderCommandExecute(object p) => true;
@@ -172,27 +173,38 @@ namespace MyJavaTest.WpfClient.ViewModels
         #endregion
 
 
-        private void LoadTests()
+        private void LoadTestsAsync()
         {
-            if (!string.IsNullOrWhiteSpace(DirectoryPath))
+            try
             {
-                if (Directory.Exists(DirectoryPath))
+                if (!string.IsNullOrWhiteSpace(DirectoryPath))
                 {
-                    TestFiles.Clear();
-                    var files = Directory.GetFiles(DirectoryPath);
-                    var tests = _testFactory.GetTests(files);
-                    foreach (var test in tests)
+                    if (Directory.Exists(DirectoryPath))
                     {
-                        TestFiles.Add(test);
+                        TestFiles.Clear();
+                        var files = Directory.GetFiles(DirectoryPath);
+                        var tests = _testFactory.GetTests(files);
+                        foreach (var test in tests)
+                        {
+                            TestFiles.Add(test);
+                            Status = $"Тестов добавлено: {TestFiles.Count}";
+                        }
                     }
                 }
+                Status = "Добавление тестов завершено!";
             }
+            catch (Exception e)
+            {
+                Status = $"Ошибка при загрузке: {e.Message}";
+            }
+            
         }
 
         private void ExecuteLexerTest(TestFileViewModel test)
         {
             try
             {
+                Status = $"Тестирую файл {test.FileName}";
                 string text = test.FileContent;
                 _lexer.SetText(text);
                 Token token;
@@ -202,12 +214,19 @@ namespace MyJavaTest.WpfClient.ViewModels
                 }
                 test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
                 _lexer.ClearText();
+                TotalTested++;
+                TestedWithoutErrors++;
+                Status = $"Файл {test.FileName} протестирован успешно.";
             }
             catch (Exception e)
             {
                 test.TestLog.Add($"Error: {e.Message}");
                 test.TestStatus = Models.TestStatus.Error;
                 test.TestStatusColor = Color.Red;
+                TotalTested++;
+                TestedWithErrors++;
+                _lexer.ClearText();
+                Status = $"Файл {test.FileName} протестирован с ошибками.";
             }
         }
 
@@ -215,16 +234,24 @@ namespace MyJavaTest.WpfClient.ViewModels
         {
             try
             {
+                Status = $"Тестирую файл {test.FileName}";
                 string text = test.FileContent;
                 _syntaxAnalyzer.SetText(text);
                 _syntaxAnalyzer.Analyze();
                 _syntaxAnalyzer.ClearText();
+                TotalTested++;
+                TestedWithoutErrors++;
+                Status = $"Файл {test.FileName} протестирован успешно.";
             }
             catch (Exception e)
             {
                 test.TestLog.Add($"Error: {e.Message}");
                 test.TestStatus = Models.TestStatus.Error;
                 test.TestStatusColor = Color.Red;
+                TotalTested++;
+                TestedWithErrors++;
+                _syntaxAnalyzer.ClearText();
+                Status = $"Файл {test.FileName} протестирован с ошибками.";
             }
         }
     }

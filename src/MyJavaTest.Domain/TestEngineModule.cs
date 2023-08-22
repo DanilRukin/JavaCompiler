@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MyJavaTest.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
