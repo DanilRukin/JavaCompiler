@@ -21,12 +21,14 @@ namespace MyJavaTest.WpfClient.ViewModels
         private TestStatus _testStatus = TestStatus.NotTested;
         public TestStatus TestStatus { get => _testStatus; set => Set(ref _testStatus, value); }
 
-        private Color _testStatusColor = Color.Black;
+        private Color _testStatusColor = DefaultColor;
         public Color TestStatusColor { get => _testStatusColor; set => Set(ref _testStatusColor, value); }
 
         private string _fileContent = string.Empty;
         public string FileContent { get => _fileContent; set => Set(ref _fileContent, value); }
 
         public ObservableCollection<string> TestLog { get; private set; } = new ObservableCollection<string>();
+
+        public static Color DefaultColor => Color.Black;
     }
 }
