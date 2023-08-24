@@ -24,7 +24,7 @@ namespace MyJavaTest.WpfClient.Models.Services
         {
             string lexerFileExtension = _configuration["LexerExt"];
             string syntaxFileExtension = _configuration["SyntaxExt"];
-            string semanticFileExtension = _configuration["SyntaxExt"];
+            string semanticFileExtension = _configuration["SemanticExt"];
             string fileExt = fileName.Substring(fileName.LastIndexOf('.') + 1);
             TestFileViewModel model = new()
             {

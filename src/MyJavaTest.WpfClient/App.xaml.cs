@@ -1,5 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using JavaCompiler.LexerAnalyzer;
+using JavaCompiler.SyntaxAnalyzer;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MyJavaTest.WpfClient.Models.Services;
+using MyJavaTest.WpfClient.Models.Services.Interfaces;
 using MyJavaTest.WpfClient.Services.Dialogs;
 using MyJavaTest.WpfClient.ViewModels;
 using System;
@@ -33,13 +37,23 @@ namespace MyJavaTest.WpfClient
         private void ConfigureServices(HostBuilderContext host, IServiceCollection services)
         {
             services.AddTransient<IFolderBrowserDialog, FolderBrowserDialog>();
+            services.AddTransient<Lexer>();
+            services.AddTransient<SyntaxAnalyzer>();
+            services.AddTransient<ITestFactory, TestFactory>();
             services.AddTransient<MainWindowViewModel>();
             services.AddTransient(
                 s =>
                 {
                     var scope = s.CreateScope();
                     var model = scope.ServiceProvider.GetRequiredService<MainWindowViewModel>();
-                    var window = new MainWindow { DataContext = model };
+                    //Lexer lexer = scope.ServiceProvider.GetRequiredService<Lexer>();
+                    //SyntaxAnalyzer syntaxAnalyzer = scope.ServiceProvider.GetRequiredService<SyntaxAnalyzer>();
+                    //ITestFactory testFactory = scope.ServiceProvider.GetRequiredService<ITestFactory>();
+                    //IFolderBrowserDialog dialog = scope.ServiceProvider.GetRequiredService<IFolderBrowserDialog>();
+                    var window = new MainWindow()
+                    {
+                        DataContext = model
+                    };
                     model.DialogComplete += (_, _) => window.Close();
                     window.Closed += (_, _) => scope.Dispose();
 

@@ -127,7 +127,11 @@ namespace MyJavaTest.WpfClient.ViewModels
                     {
                         ExecuteLexerTest(SelectedFile);
                     }
-                }                
+                }
+                else
+                {
+                    ExecuteLexerTest(SelectedFile);
+                }
             }                   
             else if (SelectedFile.TestFileType == Models.TestFileType.SyntaxTest)
             {
@@ -138,6 +142,10 @@ namespace MyJavaTest.WpfClient.ViewModels
                     {
                         ExecuteSyntaxTest(SelectedFile);
                     }
+                }
+                else
+                {
+                    ExecuteSyntaxTest(SelectedFile);
                 }
             }
             else
@@ -160,27 +168,22 @@ namespace MyJavaTest.WpfClient.ViewModels
                     if (MessageBox.Show("Некоторые файлы не являются тестами для лексики.\r\nВыполнить тестирование только лексики?",
                         "Предупреждение", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                     {
+                        Status = "Выполняется тестирование только лексики";
                         foreach (var test in TestFiles)
                         {
                             if (test.TestFileType == Models.TestFileType.LexerTest)
                             {
                                 ExecuteLexerTest(test);
                             }
-                            else if (test.TestFileType == Models.TestFileType.SyntaxTest)
+                            else
                             {
-                                ExecuteSyntaxTest(test);
+                                Status = $"Файл {test.FileName} пропущен";
                             }
-                        }                       
+                        }
                     }
-                }
-            }
-            else if (TestVariantSyntax)
-            {
-                if (TestFiles.Any(t => t.TestFileType != Models.TestFileType.SyntaxTest))
-                {
-                    if (MessageBox.Show("Некоторые файлы не являются тестами для синтаксиса.\r\nВыполнить тестирование только синтаксиса?",
-                        "Предупреждение", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                    else
                     {
+                        Status = "Выполняется тестирование по типу тестового файла";
                         foreach (var test in TestFiles)
                         {
                             if (test.TestFileType == Models.TestFileType.LexerTest)
@@ -195,6 +198,47 @@ namespace MyJavaTest.WpfClient.ViewModels
                     }
                 }
             }
+            else if (TestVariantSyntax)
+            {
+                if (TestFiles.Any(t => t.TestFileType != Models.TestFileType.SyntaxTest))
+                {
+                    if (MessageBox.Show("Некоторые файлы не являются тестами для синтаксиса.\r\nВыполнить тестирование только синтаксиса?",
+                        "Предупреждение", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                    {
+
+                        foreach (var test in TestFiles)
+                        {
+                            if (test.TestFileType == Models.TestFileType.SyntaxTest)
+                            {
+                                ExecuteSyntaxTest(test);
+                            }
+                            else
+                            {
+                                Status = $"Файл {test.FileName} пропущен";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Status = "Выполняется тестирование по типу тестового файла";
+                        foreach (var test in TestFiles)
+                        {
+                            if (test.TestFileType == Models.TestFileType.LexerTest)
+                            {
+                                ExecuteLexerTest(test);
+                            }
+                            else if (test.TestFileType == Models.TestFileType.SyntaxTest)
+                            {
+                                ExecuteSyntaxTest(test);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Жди, боец, еще не настало твое время!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
             Status = "Тестирование завершено";
         }
         private bool CanTestFilesCommandExecute(object p) => TestFiles.Any();
@@ -206,7 +250,6 @@ namespace MyJavaTest.WpfClient.ViewModels
         {
             SelectedFile.TestStatusColor = TestFileViewModel.DefaultColor;
             SelectedFile.TestStatus = Models.TestStatus.NotTested;
-            SelectedFile.FileContent = string.Empty;
             SelectedFile.TestLog.Clear();
             Status = "Статус сброшен.";
         }
@@ -222,7 +265,6 @@ namespace MyJavaTest.WpfClient.ViewModels
             {
                 item.TestStatusColor = TestFileViewModel.DefaultColor;
                 item.TestStatus = Models.TestStatus.NotTested;
-                item.FileContent = string.Empty;
                 item.TestLog.Clear();
             }
             Status = "Статус сброшен.";
