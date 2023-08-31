@@ -1,0 +1,13 @@
+﻿<Application x:Class="MyJavaTest.WpfClient.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MyJavaTest.WpfClient" xmlns:vm="clr-namespace:MyJavaTest.WpfClient.ViewModels"
+             >
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Infrastructure/Commands/Commands.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

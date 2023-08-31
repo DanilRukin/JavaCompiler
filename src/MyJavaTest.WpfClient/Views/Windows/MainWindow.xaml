@@ -1,0 +1,153 @@
+﻿<Window x:Class="MyJavaTest.WpfClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MyJavaTest.WpfClient"
+        mc:Ignorable="d"
+        xmlns:converters="clr-namespace:MyJavaTest.WpfClient.Infrastructure.Converters"
+        xmlns:vm="clr-namespace:MyJavaTest.WpfClient.ViewModels"
+        Title="{Binding Title}" Height="650" Width="1200"
+        d:DataContext="{d:DesignInstance vm:MainWindowViewModel, IsDesignTimeCreatable=True}">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserSortColumns" Value="True"/>
+            <Setter Property="VerticalGridLinesBrush" Value="BlueViolet"/>
+            <Setter Property="GridLinesVisibility" Value="Vertical"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Settings"/>
+                <MenuItem Header="Close" Command="{StaticResource CloseWindowCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Help"/>
+        </Menu>
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem Content="{Binding Status}"/>
+        </StatusBar>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" MinWidth="450"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" MinWidth="450">
+                <DockPanel Margin="5, 15" DockPanel.Dock="Top">
+                    <Button DockPanel.Dock="Right" Content="..." Margin="5, 0, 0, 0" Width="25" MinWidth="25" VerticalAlignment="Bottom"
+                            Command="{Binding ChooseFolderCommand}"/>
+                    <StackPanel>
+                        <TextBlock Text="Директория с тестами" Margin="0, 0, 0, 5"/>
+                        <TextBox MinWidth="350" Height="20" Text="{Binding DirectoryPath, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </DockPanel>
+                <UniformGrid DockPanel.Dock="Bottom" Margin="0, 5">
+                    <Button Content="Тестировать выбранный" Command="{Binding TestSelectedFileCommand}"/>
+                    <Button Content="Тестировать все" Command="{Binding TestFilesCommand}"/>
+                    <Button Content="Сбросить результат" Command="{Binding DropResultCommand}"/>
+                    <Button Content="Сбросить результаты" Command="{Binding DropAllResultsCommand}"/>
+                    <Button Content="Очистить" Command="{Binding ClearTableCommand}"/>
+                    <Button Content="Перезагрузить" Command="{Binding ReloadFilesCommand}"/>
+                </UniformGrid>
+                <GroupBox Header="Загруженные файлы" Margin="5">
+                    <DataGrid Margin="0, 5, 0, 0" ItemsSource="{Binding TestFiles}" SelectedItem="{Binding SelectedFile}">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="NotTested">
+                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="Success">
+                                        <Setter Property="Foreground" Value="Green"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="Error">
+                                        <Setter Property="Foreground" Value="Red"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="InProcessing">
+                                        <Setter Property="Foreground" Value="Blue"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Имя файла" Width="200" Binding="{Binding FileName}"/>
+                            <DataGridTextColumn Header="Тип теста" Width="120" Binding="{Binding TestFileType}"/>
+                            <DataGridTextColumn Header="Статус" Width="120" Binding="{Binding TestStatus}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+            </DockPanel>
+            <GridSplitter Grid.Column="1" Width="3" Background="Black" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
+            <DockPanel Grid.Column="2" Margin="5">
+                <GroupBox Header="Вариант тестирования" DockPanel.Dock="Top">
+                    <WrapPanel>
+                        <WrapPanel.Resources>
+                            <Style TargetType="RadioButton">
+                                <Setter Property="Margin" Value="5"/>
+                            </Style>
+                        </WrapPanel.Resources>
+                        <RadioButton Content="Лексический анализатор" IsChecked="{Binding TestVariantLexer}"/>
+                        <RadioButton Content="Синтаксический анализатор" IsChecked="{Binding TestVariantSyntax}"/>
+                        <RadioButton Content="Семантический анализатор" IsChecked="{Binding TestVariantSemantic}"/>
+                    </WrapPanel>
+                </GroupBox>
+                <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
+                    <WrapPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="5, 0"/>
+                        </Style>
+                    </WrapPanel.Resources>
+                    <TextBlock Text="Отсканировано:"/>
+                    <TextBlock Text="{Binding TotalTested, Converter={converters:IntToStringConverter}}"/>
+                    <TextBlock Text="из"/>
+                    <TextBlock Text="{Binding TestFiles.Count}" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="." Margin="0"/>
+                    <TextBlock Text="Без ошибок -"/>
+                    <TextBlock Text="{Binding TestedWithoutErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="," Margin="0"/>
+                    <TextBlock Text="С ошибками -"/>
+                    <TextBlock Text="{Binding TestedWithErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
+                    <TextBlock Text="." Margin="0"/>
+                </WrapPanel>
+                <TabControl Visibility="{Binding TabControlVisibility}" d:Visibility="Visible">
+                    <TabItem Header="Содержимое файла">
+                        <TextBlock Text="{Binding SelectedFile.FileContent}"/>
+                    </TabItem>
+                    <TabItem Header="Результаты тестирования">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top">
+                                <WrapPanel  Margin="0, 5">
+                                    <TextBlock Text="Тестируемый файл:" Margin="0, 0, 5, 0"/>
+                                    <TextBlock Text="{Binding SelectedFile.FileName}"/>
+                                </WrapPanel>
+                                <Button Content="Копировать в буфер" Width="120" HorizontalAlignment="Left" Command="{Binding CopyLogToClipboardCommand}"/>
+                            </StackPanel>
+                            <ListBox Margin="0, 5" ItemsSource="{Binding SelectedFile.TestLog}">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding State}" Value="Success">
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding State}" Value="Error">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </DockPanel>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>
