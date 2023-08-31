@@ -117,16 +117,19 @@
                     <TextBlock Text="{Binding TestedWithErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
                     <TextBlock Text="." Margin="0"/>
                 </WrapPanel>
-                <TabControl Visibility="{Binding TabControlVisibility}">
+                <TabControl Visibility="{Binding TabControlVisibility}" d:Visibility="Visible">
                     <TabItem Header="Содержимое файла">
                         <TextBlock Text="{Binding SelectedFile.FileContent}"/>
                     </TabItem>
                     <TabItem Header="Результаты тестирования">
                         <DockPanel>
-                            <WrapPanel DockPanel.Dock="Top" Margin="0, 5">
-                                <TextBlock Text="Тестируемый файл:" Margin="0, 0, 5, 0"/>
-                                <TextBlock Text="{Binding SelectedFile.FileName}"/>
-                            </WrapPanel>
+                            <StackPanel DockPanel.Dock="Top">
+                                <WrapPanel  Margin="0, 5">
+                                    <TextBlock Text="Тестируемый файл:" Margin="0, 0, 5, 0"/>
+                                    <TextBlock Text="{Binding SelectedFile.FileName}"/>
+                                </WrapPanel>
+                                <Button Content="Копировать в буфер" Width="120" HorizontalAlignment="Left" Command="{Binding CopyLogToClipboardCommand}"/>
+                            </StackPanel>
                             <ListBox Margin="0, 5" ItemsSource="{Binding SelectedFile.TestLog}">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">

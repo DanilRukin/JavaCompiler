@@ -38,6 +38,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             DropAllResultsCommand = new LambdaCommand(OnDropAllResultsCommandExecuted, CanDropAllResultsCommandExecute);
             ClearTableCommand = new LambdaCommand(OnClearTableCommandExecuted, CanClearTableCommandExecute);
             ReloadFilesCommand = new LambdaCommand(OnReloadFilesCommandExecuted, CanReloadFilesCommandExecute);
+            CopyLogToClipboardCommand = new LambdaCommand(OnCopyLogToClipboardCommandExecuted, CanCopyLogToClipboardCommandExecute);
         }
 
         public MainWindowViewModel(IFolderBrowserDialog folderBrowserDialog, ITestFactory testFactory, SyntaxAnalyzer syntaxAnalyzer, Lexer lexer) : this()
@@ -335,6 +336,28 @@ namespace MyJavaTest.WpfClient.ViewModels
         }
         private bool CanReloadFilesCommandExecute(object p) => !string.IsNullOrWhiteSpace(DirectoryPath);
         #endregion
+
+        #region CopyLogToClipboardCommand
+        public ICommand CopyLogToClipboardCommand { get; }
+        private void OnCopyLogToClipboardCommandExecuted(object p)
+        {
+            try
+            {
+                StringBuilder builder = new StringBuilder();
+                foreach (var log in SelectedFile.TestLog)
+                {
+                    builder.AppendLine(log.Value);
+                }
+                Clipboard.SetText(builder.ToString());
+                Status = "Информация скопирована";
+            }
+            catch (Exception e)
+            {
+                Status = $"Ошибка при копировании в буфер: {e.Message}";
+            }
+        }
+        private bool CanCopyLogToClipboardCommandExecute(object p) => SelectedFile is not null && SelectedFile.TestLog.Count > 0;
+        #endregion
         #endregion
 
 
@@ -374,9 +397,9 @@ namespace MyJavaTest.WpfClient.ViewModels
                 Token token;
                 while ((token = _lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
                 {
-                    test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n", TestLogItemState.Success));
+                    test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}", TestLogItemState.Success));
                 }
-                test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n", TestLogItemState.Success));
+                test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}", TestLogItemState.Success));
                 test.TestStatus = Models.TestStatus.Success;
                 _lexer.ClearText();
                 Status = $"Файл {test.FileName} протестирован успешно.";
