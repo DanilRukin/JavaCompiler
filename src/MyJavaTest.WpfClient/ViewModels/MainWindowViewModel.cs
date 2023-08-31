@@ -96,7 +96,21 @@ namespace MyJavaTest.WpfClient.ViewModels
         public ObservableCollection<TestFileViewModel> TestFiles { get; private set; } = new ObservableCollection<TestFileViewModel>();
 
         private TestFileViewModel _selectedFile = null;
-        public TestFileViewModel SelectedFile { get => _selectedFile; set => Set(ref _selectedFile, value); }
+        public TestFileViewModel SelectedFile 
+        { 
+            get => _selectedFile;
+            set
+            {
+                if (value == null)
+                    TabControlVisibility = Visibility.Collapsed;
+                else
+                    TabControlVisibility = Visibility.Visible;
+                Set(ref _selectedFile, value);
+            }
+        }
+
+        private Visibility _tabControlVisibility = Visibility.Collapsed;
+        public Visibility TabControlVisibility { get => _tabControlVisibility; set => Set(ref _tabControlVisibility, value); }
 
         #endregion
 
@@ -197,6 +211,14 @@ namespace MyJavaTest.WpfClient.ViewModels
                         }
                     }
                 }
+                else
+                {
+                    Status = "Выполняется тестирование лексики";
+                    foreach (var test in TestFiles)
+                    {
+                        ExecuteLexerTest(test);
+                    }
+                }
             }
             else if (TestVariantSyntax)
             {
@@ -234,6 +256,14 @@ namespace MyJavaTest.WpfClient.ViewModels
                         }
                     }
                 }
+                else
+                {
+                    Status = "Выполняется тестирование синтаксиса...";
+                    foreach (var test in TestFiles)
+                    {
+                        ExecuteSyntaxTest(test);
+                    }
+                }
             }
             else
             {
@@ -251,6 +281,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             SelectedFile.TestStatusColor = TestFileViewModel.DefaultColor;
             SelectedFile.TestStatus = Models.TestStatus.NotTested;
             SelectedFile.TestLog.Clear();
+            SelectedFile = null;
             Status = "Статус сброшен.";
         }
         private bool CanDropResultCommandExecute(object p) => SelectedFile is not null 
@@ -263,14 +294,18 @@ namespace MyJavaTest.WpfClient.ViewModels
         {
             foreach (var item in TestFiles)
             {
-                item.TestStatusColor = TestFileViewModel.DefaultColor;
-                item.TestStatus = Models.TestStatus.NotTested;
-                item.TestLog.Clear();
+                if (item.TestStatus is not Models.TestStatus.NotTested)
+                {
+                    item.TestStatusColor = TestFileViewModel.DefaultColor;
+                    item.TestStatus = Models.TestStatus.NotTested;
+                    item.TestLog.Clear();
+                }               
             }
+            SelectedFile = null;
             Status = "Статус сброшен.";
         }
-        private bool CanDropAllResultsCommandExecute(object p) => TestFiles.Any() 
-            && TestFiles.FirstOrDefault(f => f.TestStatus == Models.TestStatus.NotTested) is not default(TestFileViewModel);
+        private bool CanDropAllResultsCommandExecute(object p) => TestFiles.Any()
+            && TestFiles.Any(t => t.TestStatus != Models.TestStatus.NotTested);
         #endregion
 
         #region ClearTableCommand
@@ -338,6 +373,7 @@ namespace MyJavaTest.WpfClient.ViewModels
                     test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
                 }
                 test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                test.TestStatus = Models.TestStatus.Success;
                 _lexer.ClearText();
                 Status = $"Файл {test.FileName} протестирован успешно.";
             }
@@ -361,6 +397,7 @@ namespace MyJavaTest.WpfClient.ViewModels
                 _syntaxAnalyzer.Analyze();
                 _syntaxAnalyzer.ClearText();
                 Status = $"Файл {test.FileName} протестирован успешно.";
+                test.TestStatus = Models.TestStatus.Success;
             }
             catch (Exception e)
             {

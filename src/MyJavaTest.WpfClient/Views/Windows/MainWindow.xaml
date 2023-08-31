@@ -59,6 +59,24 @@
                 </UniformGrid>
                 <GroupBox Header="Загруженные файлы" Margin="5">
                     <DataGrid Margin="0, 5, 0, 0" ItemsSource="{Binding TestFiles}" SelectedItem="{Binding SelectedFile}">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="NotTested">
+                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="Success">
+                                        <Setter Property="Foreground" Value="Green"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="Error">
+                                        <Setter Property="Foreground" Value="Red"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding TestStatus}" Value="InProcessing">
+                                        <Setter Property="Foreground" Value="Blue"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Имя файла" Width="200" Binding="{Binding FileName}"/>
                             <DataGridTextColumn Header="Тип теста" Width="120" Binding="{Binding TestFileType}"/>
@@ -99,7 +117,7 @@
                     <TextBlock Text="{Binding TestedWithErrors, Converter={converters:IntToStringConverter}}" Margin="5, 0, 0, 0"/>
                     <TextBlock Text="." Margin="0"/>
                 </WrapPanel>
-                <TabControl>
+                <TabControl Visibility="{Binding TabControlVisibility}">
                     <TabItem Header="Содержимое файла">
                         <TextBlock Text="{Binding SelectedFile.FileContent}"/>
                     </TabItem>
