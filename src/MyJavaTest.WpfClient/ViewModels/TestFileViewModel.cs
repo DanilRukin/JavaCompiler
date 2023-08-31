@@ -27,7 +27,7 @@ namespace MyJavaTest.WpfClient.ViewModels
         private string _fileContent = string.Empty;
         public string FileContent { get => _fileContent; set => Set(ref _fileContent, value); }
 
-        public ObservableCollection<string> TestLog { get; private set; } = new ObservableCollection<string>();
+        public ObservableCollection<TestLogItemViewModel> TestLog { get; private set; } = new ObservableCollection<TestLogItemViewModel>();
 
         public static Color DefaultColor => Color.Black;
     }

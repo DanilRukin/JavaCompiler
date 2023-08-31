@@ -128,7 +128,18 @@
                                 <TextBlock Text="{Binding SelectedFile.FileName}"/>
                             </WrapPanel>
                             <ListBox Margin="0, 5" ItemsSource="{Binding SelectedFile.TestLog}">
-                                
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding State}" Value="Success">
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding State}" Value="Error">
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
                             </ListBox>
                         </DockPanel>
                     </TabItem>

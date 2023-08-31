@@ -63,14 +63,13 @@ namespace MyJavaTest.WpfClient.ViewModels
         public string DirectoryPath { get => _directoryPath; set => Set(ref _directoryPath, value);}
 
         private int _totalTested = 0;
-        public int TotalTested => TestFiles.Select(t => t.TestStatus == Models.TestStatus.Success 
-            || t.TestStatus == Models.TestStatus.Error).Count();
+        public int TotalTested { get => _totalTested; set => Set(ref _totalTested, value); } 
 
         private int _testedWithoutErrors = 0;
-        public int TestedWithoutErrors => TestFiles.Select(t => t.TestStatus == Models.TestStatus.Success).Count();
+        public int TestedWithoutErrors { get => _testedWithoutErrors; set => Set(ref _testedWithoutErrors, value); }
 
         private int _testedWithErrors = 0;
-        public int TestedWithErrors => TestFiles.Select(t => t.TestStatus == Models.TestStatus.Error).Count();
+        public int TestedWithErrors { get => _testedWithErrors; set => Set(ref _testedWithErrors, value); }
 
         private bool _testVariantLexer = true;
         public bool TestVariantLexer
@@ -123,6 +122,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             {
                 DirectoryPath = _folderBrowserDialog.SelectedPath;
                 LoadTestsAsync();
+                UpdateTetstedFilesStatusesCounts();
             }
         }
         private bool CanChooseFolderCommandExecute(object p) => true;
@@ -282,6 +282,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             SelectedFile.TestStatus = Models.TestStatus.NotTested;
             SelectedFile.TestLog.Clear();
             SelectedFile = null;
+            UpdateTetstedFilesStatusesCounts();
             Status = "Статус сброшен.";
         }
         private bool CanDropResultCommandExecute(object p) => SelectedFile is not null 
@@ -302,6 +303,7 @@ namespace MyJavaTest.WpfClient.ViewModels
                 }               
             }
             SelectedFile = null;
+            UpdateTetstedFilesStatusesCounts();
             Status = "Статус сброшен.";
         }
         private bool CanDropAllResultsCommandExecute(object p) => TestFiles.Any()
@@ -315,6 +317,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             TestFiles.Clear();
             SelectedFile = null;
             Status = "Таблица очищена.";
+            UpdateTetstedFilesStatusesCounts();
         }
         private bool CanClearTableCommandExecute(object p) => TestFiles.Any();
         #endregion
@@ -328,6 +331,7 @@ namespace MyJavaTest.WpfClient.ViewModels
             Status = "Таблица очищена.";
             LoadTestsAsync();
             Status = "Таблица перезагружена.";
+            UpdateTetstedFilesStatusesCounts();
         }
         private bool CanReloadFilesCommandExecute(object p) => !string.IsNullOrWhiteSpace(DirectoryPath);
         #endregion
@@ -370,20 +374,24 @@ namespace MyJavaTest.WpfClient.ViewModels
                 Token token;
                 while ((token = _lexer.NextToken()).Lexeme != Lexemes.TypeEnd)
                 {
-                    test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                    test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n", TestLogItemState.Success));
                 }
-                test.TestLog.Add($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n");
+                test.TestLog.Add(new TestLogItemViewModel($"Lexeme type is: {token.Lexeme};\tLexeme value is: {token.Value}\r\n", TestLogItemState.Success));
                 test.TestStatus = Models.TestStatus.Success;
                 _lexer.ClearText();
                 Status = $"Файл {test.FileName} протестирован успешно.";
             }
             catch (Exception e)
             {
-                test.TestLog.Add($"Error: {e.Message}");
+                test.TestLog.Add(new TestLogItemViewModel($"Error: {e.Message}", TestLogItemState.Error));
                 test.TestStatus = Models.TestStatus.Error;
                 test.TestStatusColor = Color.Red;
                 _lexer.ClearText();
                 Status = $"Файл {test.FileName} протестирован с ошибками.";
+            }
+            finally
+            {
+                UpdateTetstedFilesStatusesCounts();
             }
         }
 
@@ -401,12 +409,23 @@ namespace MyJavaTest.WpfClient.ViewModels
             }
             catch (Exception e)
             {
-                test.TestLog.Add($"Error: {e.Message}");
+                test.TestLog.Add(new TestLogItemViewModel($"Error: {e.Message}", TestLogItemState.Error));
                 test.TestStatus = Models.TestStatus.Error;
                 test.TestStatusColor = Color.Red;
                 _syntaxAnalyzer.ClearText();
                 Status = $"Файл {test.FileName} протестирован с ошибками.";
             }
+            finally
+            {
+                UpdateTetstedFilesStatusesCounts();
+            }
+        }
+
+        private void UpdateTetstedFilesStatusesCounts()
+        {
+            TotalTested = TestFiles.Count(t => t.TestStatus == Models.TestStatus.Error || t.TestStatus == Models.TestStatus.Success);
+            TestedWithErrors = TestFiles.Count(t => t.TestStatus == Models.TestStatus.Error);
+            TestedWithoutErrors = TestFiles.Count(t => t.TestStatus == Models.TestStatus.Success);
         }
     }
 }
