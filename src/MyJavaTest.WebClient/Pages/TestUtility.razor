@@ -1,0 +1,93 @@
+﻿@page "/test"
+@using MyJavaTest.WebClient.ViewModels;
+@using MyJavaTest.WebClient.Models;
+
+<MudGrid>
+    <MudItem xs="6">
+        <MudPaper>
+            <MudStack>
+                <MudText>Директория с тестами</MudText>
+                <MudTextField @bind-Value="DirectoryPath" Label="Директория с тестами" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+            </MudStack>
+            <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" />
+        </MudPaper>
+        <MudPaper>
+            <MudTable Items="@TestFiles" Dense="@_dense" Hover="@_hover" Bordered="@_bordered" Striped="@_striped" Filter="new Func<TestFileViewModel,bool>(FilterFunction)" @bind-SelectedItem="_selectedFile">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Загруженные файлы</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Nr</MudTh>
+                    <MudTh>Sign</MudTh>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Position</MudTh>
+                    <MudTh>Molar mass</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Имя файла">@context.FileName</MudTd>
+                    <MudTd DataLabel="Тип файла">@context.TestFileType</MudTd>
+                    <MudTd DataLabel="Position">@context.TestStatus</MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+
+            <div class="d-flex flex-wrap mt-4">
+                <MudSwitch @bind-Checked="@_hover" Color="Color.Primary">Hover</MudSwitch>
+                <MudSwitch @bind-Checked="@_dense" Color="Color.Secondary">Dense</MudSwitch>
+                <MudSwitch @bind-Checked="@_striped" Color="Color.Tertiary">Striped</MudSwitch>
+                <MudSwitch @bind-Checked="@_bordered" Color="Color.Warning">Bordered</MudSwitch>
+                <MudSpacer />
+                <div style="min-width:200px;">
+                    <MudText Inline="true" Class="align-self-center">Выбранный файл: @_selectedFile?.FileName</MudText>
+                </div>
+            </div>
+        </MudPaper>
+        <MudPaper>
+            <MudGrid>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Тестировать выбранный</MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Тестировать все</MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Сбросить результат</MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Сбросить результаты</MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Очистить</MudButton>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Перезагрузить</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="6">
+        <MudForm>
+            <MudText>Вариант тестирования</MudText>
+            <MudRadioGroup @bind-SelectedOption="@TestFileType">
+                <MudRadio Option="@TestFileType.LexerTest" Color="Color.Primary">Лексический анализатор</MudRadio>
+                <MudRadio Option="@TestFileType.SyntaxTest" Color="Color.Secondary">Синтаксический анализатор</MudRadio>
+                <MudRadio Option="@TestFileType.SemanticTest">Семантический анализатор</MudRadio>
+            </MudRadioGroup>
+        </MudForm>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabPanel Text="Содержимое файла">
+                <MudText>@_selectedFile?.FileContent</MudText>
+            </MudTabPanel>
+            <MudTabPanel Text="Результаты тестирования">
+                <MudText>Тестируемый файл: @_selectedFile?.FileName</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">Копировать в буфер</MudButton>
+                <MudTextField T="string" Label="Outlined" Variant="Variant.Outlined" Text="@string.Join("\r\n", _selectedFile?.TestLog.Select(t => t.Value))" Lines="10" />
+            </MudTabPanel>
+        </MudTabs>
+    </MudItem>
+</MudGrid>

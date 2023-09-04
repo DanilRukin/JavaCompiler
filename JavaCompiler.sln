@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyJavaTest", "src\MyJavaTes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyJavaTest.WpfClient", "src\MyJavaTest.WpfClient\MyJavaTest.WpfClient.csproj", "{1F8BF2D2-1BA6-4F4B-B8D5-E3A808B3CF0A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyJavaTest.Domain", "src\MyJavaTest.Domain\MyJavaTest.Domain.csproj", "{BF4D17A1-4564-458F-ABC6-4AB0067F1C1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyJavaTest.Domain", "src\MyJavaTest.Domain\MyJavaTest.Domain.csproj", "{BF4D17A1-4564-458F-ABC6-4AB0067F1C1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyJavaTest.WebClient", "src\MyJavaTest.WebClient\MyJavaTest.WebClient.csproj", "{1BB5F5A4-AB49-4BE8-93D7-229F98A24C1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{BF4D17A1-4564-458F-ABC6-4AB0067F1C1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF4D17A1-4564-458F-ABC6-4AB0067F1C1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF4D17A1-4564-458F-ABC6-4AB0067F1C1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BB5F5A4-AB49-4BE8-93D7-229F98A24C1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BB5F5A4-AB49-4BE8-93D7-229F98A24C1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BB5F5A4-AB49-4BE8-93D7-229F98A24C1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BB5F5A4-AB49-4BE8-93D7-229F98A24C1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
