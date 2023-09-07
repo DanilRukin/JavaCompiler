@@ -391,6 +391,7 @@ namespace MyJavaTest.WpfClient.ViewModels
         {
             try
             {
+                test.TestLog.Clear();
                 Status = $"Тестирую файл {test.FileName}";
                 string text = test.FileContent;
                 _lexer.SetText(text);
@@ -422,6 +423,7 @@ namespace MyJavaTest.WpfClient.ViewModels
         {
             try
             {
+                test.TestLog.Clear();
                 Status = $"Тестирую файл {test.FileName}";
                 string text = test.FileContent;
                 _syntaxAnalyzer.SetText(text);
