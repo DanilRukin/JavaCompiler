@@ -523,7 +523,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassDeclaration });
                                 notDefined = false;
                             }
-                            else if (token.Lexeme == Lexemes.TypeFinalKeyWord) // MethodDeclaration также может начинаться с final
+                            else if (token.Lexeme == Lexemes.TypeFinalKeyWord) // MethodDeclaration, ClassDeclaration также может начинаться с final
                             {
                                 Lexer.Position position = _lexer.SavePosition();
                                 Token nextToken = _lexer.NextToken();
@@ -547,6 +547,12 @@ namespace JavaCompiler.SyntaxAnalyzer
                                         if (nextToken.Lexeme == Lexemes.TypeEnd)
                                         {
                                             throw new SyntaxErrorException("Встречен конец файла");
+                                        }
+                                        if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // конструктор
+                                        {
+                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ConstructorDeclaration });
+                                            _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeFinalKeyWord, "final") });
+                                            notDefined = false;
                                         }
                                         if (nextToken.Lexeme == Lexemes.TypeDot) // Составной (сложный) тип
                                         {
@@ -573,7 +579,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
                                                     notDefined = false;
                                                 }
-                                                else // final Type VariableDeclaratorList;
+                                                else // final Type VariableDeclarators;
                                                 {
                                                     _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
                                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
@@ -615,7 +621,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                                 $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
                                         }
                                     }
-                                    else // следующим должен быть Identifier
+                                    else // int, double, boolean... следующим должен быть Identifier
                                     {
                                         nextToken = _lexer.NextToken();
                                         if (nextToken.Lexeme == Lexemes.TypeEnd)
@@ -661,8 +667,8 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 || token.Lexeme == Lexemes.TypeWhileKeyWord
                                 || token.Lexeme == Lexemes.TypeReturnKeyWord
                                 || token.Lexeme == Lexemes.TypeSemicolon
-                                || token.Lexeme == Lexemes.TypeIncrement
-                                || token.Lexeme == Lexemes.TypeDecrement) // Statement
+                                || token.Lexeme == Lexemes.TypeNewKeyWord
+                                || token.Lexeme == Lexemes.TypeIdentifier) // Statement
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Statement });
                                 notDefined = false;
