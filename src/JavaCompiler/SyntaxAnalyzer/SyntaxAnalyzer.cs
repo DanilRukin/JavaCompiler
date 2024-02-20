@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace JavaCompiler.SyntaxAnalyzer
 {
@@ -678,134 +679,19 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 Epsilon();
                                 notDefined = false;
                             }
-                            else if (token.Lexeme == Lexemes.TypeIntKeyWord
-                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
-                                || token.Lexeme == Lexemes.TypeBooleanKeyWord
-                                || token.Lexeme == Lexemes.TypeIdentifier)
-                            {
-                                // либо переменные, либо методы
-                                Lexer.Position position = _lexer.SavePosition();
-                                if (token.Lexeme == Lexemes.TypeIdentifier) // Возможно, составной тип Identifier.Identifier
-                                {
-                                    Token nextToken = _lexer.NextToken();
-                                    if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                    {
-                                        throw new SyntaxErrorException("Встречен конец файла");
-                                    }
-                                    if (nextToken.Lexeme == Lexemes.TypeDot) // Составной тип
-                                    {
-                                        while (nextToken.Lexeme == Lexemes.TypeDot)
-                                        {
-                                            nextToken = _lexer.NextToken();
-                                            if (nextToken.Lexeme != Lexemes.TypeIdentifier) // после '.' ожидаем только Identifier
-                                            {
-                                                throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован символ: {nextToken.Value}. " +
-                                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
-                                            }
-                                            nextToken = _lexer.NextToken();
-                                        }
-                                        // Встречено что-то, кроме '.', а значит, можно заносить в магазин инфу о дальнейшем содержимом
-                                        if (nextToken.Lexeme == Lexemes.TypeIdentifier) // Либо метод, либо переменные
-                                        {
-                                            nextToken = _lexer.NextToken();
-                                            if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                            {
-                                                throw new SyntaxErrorException("Встречен конец файла");
-                                            }
-                                            if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // это MethodDeclaration
-                                            {
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
-                                                notDefined = false;
-                                            }
-                                            else // Type VariableDeclaratorList;
-                                            {
-                                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
-                                                notDefined = false;
-                                            }
-                                        }
-                                    }
-                                    else // Просто тип
-                                    {
-                                        nextToken = _lexer.NextToken();
-                                        if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                        {
-                                            throw new SyntaxErrorException("Встречен конец файла");
-                                        }
-                                        if (nextToken.Lexeme == Lexemes.TypeIdentifier)
-                                        {
-                                            nextToken = _lexer.NextToken();
-                                            if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                            {
-                                                throw new SyntaxErrorException("Встречен конец файла");
-                                            }
-                                            if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // MethodDeclaration
-                                            {
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
-                                                notDefined = false;
-                                            }
-                                            else
-                                            {
-                                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
-                                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
-                                                notDefined = false;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
-                                                $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    Token nextToken = _lexer.NextToken();
-                                    if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                    {
-                                        throw new SyntaxErrorException("Встречен конец файла");
-                                    }
-                                    if (nextToken.Lexeme == Lexemes.TypeIdentifier)
-                                    {
-                                        nextToken = _lexer.NextToken();
-                                        if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                        {
-                                            throw new SyntaxErrorException("Встречен конец файла");
-                                        }
-                                        if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // метод
-                                        {
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
-                                            notDefined = false;
-                                        }
-                                        else // локальные переменные
-                                        {
-                                            _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
-                                            notDefined = false;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
-                                            $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
-                                    }
-                                }
-                                _lexer.RestorePosition(position);
-                            }
                             if (notDefined) // если ничего выше не отработало, то ожидаю здесь Statement
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Statement });
                             }
                             break;
                         //Statement:
-                        //    WhileStatement
-                        //    | Block
-                        //    | ;
-                        //    | StatementExpression;
-                        //    | ReturnStatement
+                        //      Block
+                        //      | MethodInvocation();
+                        //      | new Name();
+                        //      | LeftHandSide AssignmentOperator Expression;
+                        //      | WhileStatement
+                        //      | ReturnStatement
+                        //      | ;
                         case NonTerminals.Statement:
                             if (token.Lexeme == Lexemes.TypeWhileKeyWord)
                             {
@@ -823,23 +709,29 @@ namespace JavaCompiler.SyntaxAnalyzer
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Block });
                             }
-                            else if (token.Lexeme == Lexemes.TypeIncrement
-                                || token.Lexeme == Lexemes.TypeDecrement
-                                || token.Lexeme == Lexemes.TypeIdentifier
-                                || token.Lexeme == Lexemes.TypeNewKeyWord
-                                || token.Lexeme == Lexemes.TypeOpenParenthesis
-                                || token.Lexeme == Lexemes.TypeMult
-                                || token.Lexeme == Lexemes.TypeDiv
-                                || token.Lexeme == Lexemes.TypeMod
-                                || token.Lexeme == Lexemes.TypeLessSign
-                                || token.Lexeme == Lexemes.TypeLessOrEqualSign
-                                || token.Lexeme == Lexemes.TypeMoreSign
-                                || token.Lexeme == Lexemes.TypeMoreOrEqualSign
-                                || token.Lexeme == Lexemes.TypeEqualSign
-                                || token.Lexeme == Lexemes.TypeNotEqualSign)
+                            else if (token.Lexeme == Lexemes.TypeNewKeyWord)
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.StatementExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeNewKeyWord, "new") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                NonTerminals nextNonTerminal = ResolveMethodInvokationOrFieldAccess();
+                                if (nextNonTerminal == NonTerminals.MethodInvocation)
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodInvocation });
+                                }
+                                else
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AssignmentOperator });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.LeftHandSide });
+                                }
                             }
                             else
                             {
@@ -1199,7 +1091,7 @@ namespace JavaCompiler.SyntaxAnalyzer
         }
 
         /// <summary>
-        /// Кладет в стэк либо <see cref="NonTerminals.MethodDeclaration"/>, либо <see cref="NonTerminals.FieldDeclaration"/>. <br></br>
+        /// Принимает решение о том, с чем анализатор имеет дело - либо <see cref="NonTerminals.MethodDeclaration"/>, либо <see cref="NonTerminals.FieldDeclaration"/>. <br></br>
         /// Указатель лексера должен быть на анализируемом имени. <br></br>
         /// Например, в строке: <code>int MethodName() { }</code> указатель лексера должен быть на 'MethodName', а в строке <code>int a;</code>
         /// указатель лексера должен быть на слове 'a'. <br></br>
@@ -1224,5 +1116,80 @@ namespace JavaCompiler.SyntaxAnalyzer
             _lexer.RestorePosition(position);
             return result;
         }
+
+
+        /// <summary>
+        /// Принимает решение о том, с чем анализатор имеет дело - либо <see cref="NonTerminals.MethodInvocation"/>, либо <see cref="NonTerminals.FieldAccess"/>. <br></br>
+        /// Указатель лексера должен быть на анализируемом имени. <br></br>
+        /// Например, в строке: <code>test.InnerTest().innerField = 5;</code> указатель лексера должен быть на 'test' <br></br>
+        /// Не изменяет текущую позицию лексера.
+        /// </summary>
+        /// <exception cref="SyntaxErrorException"></exception>
+        private NonTerminals ResolveMethodInvokationOrFieldAccess()
+        {
+            Lexer.Position position = _lexer.SavePosition();
+            Token nextToken = _lexer.NextToken();
+            NonTerminals result;
+            ThrowIfDefault(nextToken);
+            if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis)
+                result = NonTerminals.MethodInvocation;
+            else if (nextToken.Lexeme == Lexemes.TypeDot)
+            {
+                nextToken = _lexer.NextToken();
+                ThrowIfDefault(nextToken);
+                if (nextToken.Lexeme != Lexemes.TypeIdentifier) // ожидаем только идентификатор
+                    throw new SyntaxErrorException($"Ожидался символ идентификатор, но отсканирован символ '{nextToken.Value}'." +
+                                   $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                else
+                {
+                    // получен идентификатор
+                    Lexemes lastScannedLexeme = nextToken.Lexeme;
+                    bool scan = true;
+                    while (scan)
+                    {
+                        lastScannedLexeme = nextToken.Lexeme;
+                        nextToken = _lexer.NextToken();
+                        ThrowIfDefault(nextToken);
+                        switch (nextToken.Lexeme)
+                        {
+                            case Lexemes.TypeDot:
+                                continue;
+                            case Lexemes.TypeOpenParenthesis:
+                                nextToken = _lexer.NextToken();
+                                ThrowIfDefault(nextToken);
+                                if (nextToken.Lexeme != Lexemes.TypeCloseParenthesis)
+                                    throw new SyntaxErrorException($"Ожидался символ ')', но отсканирован символ '{nextToken.Value}'." +
+                                        $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                break;
+                            case Lexemes.TypeIdentifier:
+                                continue;
+                            default:
+                                scan = false;
+                                break;
+                        }                      
+                    }
+                    // закончили сканировать сложное имя
+                    if (lastScannedLexeme == Lexemes.TypeCloseParenthesis)
+                        result = NonTerminals.MethodInvocation;
+                    else if (lastScannedLexeme == Lexemes.TypeIdentifier)
+                        result = NonTerminals.FieldAccess;
+                    else
+                        throw new SyntaxErrorException($"Ожидался вызов метода или обращение к полю, но отсканирован символ '{nextToken.Value}'." +
+                            $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                }               
+            }
+            else
+                throw new SyntaxErrorException($"Ожидался символ '(' или '.', но отсканирован символ '{nextToken.Value}'." +
+                    $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+            _lexer.RestorePosition(position);
+            return result;
+        }
+
+        private void ThrowIfDefault(Token token)
+        {
+            if (token == Token.Default())
+                throw new SyntaxErrorException("Встречен конец файла");
+        }
+
     }
 }

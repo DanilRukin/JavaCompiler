@@ -28,6 +28,7 @@ namespace JavaCompiler.Common
         MethodBody,
         ConstructorDeclaration,
         ConstructorBody,
+        Name,
         Block,
         BlockStatements,
         BlockStatement,
