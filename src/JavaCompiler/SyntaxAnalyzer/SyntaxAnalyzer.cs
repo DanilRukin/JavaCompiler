@@ -849,82 +849,56 @@ namespace JavaCompiler.SyntaxAnalyzer
                             {
                                 Lexer.Position position = _lexer.SavePosition();
                                 Token nextToken = _lexer.NextToken();
-                                
+                                ThrowIfDefault(nextToken);
+                                if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis
+                                    || nextToken.Lexeme == Lexemes.TypeDot)
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression });
+                                }
+                                else
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                }
                                 _lexer.RestorePosition(position);
+                            }
+                            else if (token.Lexeme == Lexemes.TypeOpenParenthesis
+                                || token.Lexeme == Lexemes.TypeNewKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanLiteral
+                                || token.Lexeme == Lexemes.TypeNullLiteral
+                                || token.Lexeme == Lexemes.TypeIntLiteral
+                                || token.Lexeme == Lexemes.TypeDoubleLiteral)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression });
                             }
                             else
                             {
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-
-                        //  FieldAccess_1:
-                        //      | .Identifier FieldAccess_1
-                        //      | eps
-                        case NonTerminals.FieldAccess_1:
-                            if (token.Lexeme == Lexemes.TypeDot)
+                        //Expression:
+                        //    AdditiveExpression > AdditiveExpression
+                        //    | AdditiveExpression < AdditiveExpression
+                        //    | AdditiveExpression >= AdditiveExpression
+                        //    | AdditiveExpression <= AdditiveExpression
+                        //    | AdditiveExpression == AdditiveExpression
+                        //    | AdditiveExpression != AdditiveExpression
+                        //    | +AdditiveExpression
+                        //    | -AdditiveExpression
+                        //    | AdditiveExpression
+                        case NonTerminals.Expression:
+                            if (token.Lexeme == Lexemes.TypePlus)
                             {
-                                // проверяем на eps
-                                Lexer.Position position = _lexer.SavePosition();
-                                Token nextToken = _lexer.NextToken();
-                                if (nextToken.Lexeme == Lexemes.TypeNewKeyWord)
-                                {
-                                    Epsilon();
-                                    _lexer.RestorePosition(position);
-                                    break;
-                                }
-                                else if (nextToken.Lexeme == Lexemes.TypeIdentifier)
-                                {
-                                    nextToken = _lexer.NextToken();
-                                    if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis)
-                                    {
-                                        Epsilon();
-                                        _lexer.RestorePosition(position);
-                                        break;
-                                    }
-                                }
-                                _lexer.RestorePosition(position);
-                                // если не eps, то вносим данные
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess_1 });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypePlus, "+") });
                             }
-                            else if (token.Lexeme == Lexemes.TypeIncrement
-                                || token.Lexeme == Lexemes.TypeDecrement
-                                || token.Lexeme == Lexemes.TypePlus
-                                || token.Lexeme == Lexemes.TypeMinus
-                                || token.Lexeme == Lexemes.TypeMult
-                                || token.Lexeme == Lexemes.TypeDiv
-                                || token.Lexeme == Lexemes.TypeMod
-                                || token.Lexeme == Lexemes.TypeAssignmentSign)
+                            else if (token.Lexeme == Lexemes.TypeMinus)
                             {
-                                Epsilon();
-                            }
-                            else
-                            {
-                                throw new SyntaxErrorException($"Ожидался символ: '.', но отсканирован символ: '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                            }
-                            break;
-                        //Primary:
-                        //    Literal
-                        //    | TypeName
-                        //    | FieldAccess
-                        //    | ClassInstanceCreationExpression
-                        //    | MethodInvocation
-                        case NonTerminals.Primary:
-                            if (token.Lexeme == Lexemes.TypeNullLiteral
-                                || token.Lexeme == Lexemes.TypeBooleanLiteral)
-                            {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Literal });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeNewKeyWord)
-                            {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression });
-                            }
-                            else
-                            {
-                                // TODO: устранить левую рекурсию, связанную с Primary (FieldAccess)
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeMinus, "-") });
                             }
                             break;
                         default:
