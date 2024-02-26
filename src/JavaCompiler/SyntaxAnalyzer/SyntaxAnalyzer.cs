@@ -846,83 +846,17 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        //StatementExpression:
-                        //    Assignment
-                        //    | ++UnaryExpression
-                        //    | --UnaryExpression
-                        //    | PostfixExpression++
-                        //    | PostfixExpression--
-                        //    | MethodInvocation
-                        //    | ClassInstanceCreationExpression
-                        case NonTerminals.StatementExpression:
-                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                        // LeftHandSide: Name | FieldAccess
+                        case NonTerminals.LeftHandSide:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeIncrement)
-                            {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnaryExpression });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeDecrement)
-                            {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnaryExpression });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeIdentifier)
-                            {
-                                //Assignment:
-                                //    ExpressionName AssignmentOperator Expression
-                                //    | FieldAccess AssignmentOperator Expression
-
-                                // Если доберемся до знака присваивания через точку и идентификатор, то это ExpressionName AssignmentOperator Expression, иначе,
-                                // если встретим скобку, то FieldAccess AssignmentOperator Expression
-                                Lexer.Position position = _lexer.SavePosition();
-                                Token nextToken = _lexer.NextToken();
-                                if (nextToken.Lexeme == Lexemes.TypeEnd)
-                                {
-                                    throw new SyntaxErrorException("Встречен конец файла");
-                                }
-                                if (nextToken.Lexeme == Lexemes.TypeDot)
-                                {
-                                    while (nextToken.Lexeme == Lexemes.TypeDot)
-                                    {
-                                        nextToken = _lexer.NextToken();
-                                        if (nextToken.Lexeme != Lexemes.TypeIdentifier)
-                                            throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
-                                                $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
-                                        nextToken = _lexer.NextToken();
-                                        if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // FieldAccess AssignmentOperator Expression
-                                        {
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AssignmentOperator });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess });
-                                            break;
-                                        }
-                                        if (nextToken.Lexeme == Lexemes.TypePlus
-                                            || nextToken.Lexeme == Lexemes.TypeMinus
-                                            || nextToken.Lexeme == Lexemes.TypeMult
-                                            || nextToken.Lexeme == Lexemes.TypeDiv
-                                            || nextToken.Lexeme == Lexemes.TypeMod
-                                            || nextToken.Lexeme == Lexemes.TypeAssignmentSign) // ожидаю ExpressionName AssignmentOperator Expression
-                                        {
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AssignmentOperator });
-                                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ExpressionName });
-                                            break;
-                                        }
-                                        if (nextToken.Lexeme != Lexemes.TypeDot)
-                                            throw new SyntaxErrorException($"Ожидался символ '.', но отсканирован символ: {token.Value}." +
-                                                $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
-                                    }
-                                }
-                                else
-                                {
-                                    throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                                }
-                                _lexer.RestorePosition(position);
+                                // на семантическом уровне решим имя это или обращение к полю
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess });
                             }
                             else
                             {
-                                throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                throw new SyntaxErrorException($"Ожидался индентификатор, но отсканирован символ: {token.Value}." +
+                                            $" Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}.");
                             }
                             break;
                         //WhileStatement:
@@ -973,134 +907,42 @@ namespace JavaCompiler.SyntaxAnalyzer
                                     $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        //  ClassInstanceCreationExpression:
-                        //      | UnqualifiedClassInstanceCreationExpression ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | ExpressionName ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | Literal ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | TypeName ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | Literal.Identifier FieldAccess_1 ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | TypeName.Identifier FieldAccess_1 ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | MethodInvocation.Identifier FieldAccess_1 ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | MethodInvocation ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        case NonTerminals.ClassInstanceCreationExpression:
-                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                        // AssignmentOperator: = | *= | /= | %= | += | -=
+                        case NonTerminals.AssignmentOperator:
+                            if (token.Lexeme == Lexemes.TypeAssignmentSign)
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
                             }
-                            else if (token.Lexeme == Lexemes.TypeBooleanLiteral
-                                || token.Lexeme == Lexemes.TypeDoubleLiteral
-                                || token.Lexeme == Lexemes.TypeIntLiteral)
+                            else if (token.Lexeme == Lexemes.TypeMult)
                             {
-                                Lexer.Position position = _lexer.SavePosition();
-                                Token nextToken = _lexer.NextToken();
-                                if (nextToken == Token.Default())
-                                    throw new SyntaxErrorException($"Встречен конец файла. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                                else if (nextToken.Lexeme == Lexemes.TypeDot) // Literal.Identifier FieldAccess_1 ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                                {
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_2 });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess_1 });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.Literal });
-                                }
-                                else // Literal ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                                {
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_2 });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                    _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.Literal });
-                                }                               
-                                _lexer.RestorePosition(position);
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeMult, "*") });
                             }
-                            else if (token.Lexeme == Lexemes.TypeIdentifier)
+                            else if (token.Lexeme == Lexemes.TypeDiv)
                             {
-                                // TODO: ExpressionName выкинуть
-                                Lexer.Position position = _lexer.SavePosition();
-                                Token nextToken = _lexer.NextToken();
-                                if (nextToken == Token.Default())
-                                    throw new SyntaxErrorException($"Встречен конец файла. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                                if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // вызов метода
-                                {
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodInvocation });
-                                }
-                                else // либо имя TypeName, либо FieldAccees, либо ExpressionName - это уже семантика
-                                {
-                                    // TODO: на уровне семантики определить что это такое, пока что буду использовать FieldAccees
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess });
-                                }
-                                _lexer.RestorePosition(position);
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeDiv, "/") });
                             }
-                            else
+                            else if (token.Lexeme == Lexemes.TypeMod)
                             {
-                                throw new SyntaxErrorException($"Ожидался символ: 'new' или идентификатор, но отсканирован символ: '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeMod, "%") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypePlus)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypePlus, "+") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeMinus)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeMinus, "-") });
                             }
                             break;
-                        // ClassInstanceCreationExpression_1:
-                        //  | .UnqualifiedClassInstanceCreationExpression ClassInstanceCreationExpression_1
-                        //  | eps
-                        case NonTerminals.ClassInstanceCreationExpression_1:
-                            if (token.Lexeme == Lexemes.TypeDot)
-                            {
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.UnqualifiedClassInstanceCreationExpression });
-                                _mag.Push(new SyntaxData { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeSemicolon)
-                            {
-                                Epsilon();
-                            }
-                            else
-                            {
-                                throw new SyntaxErrorException($"Ожидался символ: '.' или ';', но отсканирован символ: '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                            }
-                            break;
-                        //  ClassInstanceCreationExpression_2:
-                        //      .Identifier FieldAccess_1 ClassInstanceCreationExpression_1 ClassInstanceCreationExpression_2
-                        //      | eps
-                        case NonTerminals.ClassInstanceCreationExpression_2:
-                            if (token.Lexeme == Lexemes.TypeDot)
-                            {
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_2 });
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.ClassInstanceCreationExpression_1 });
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.FieldAccess_1 });
-                                _mag.Push(new SyntaxData { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
-                                _mag.Push(new SyntaxData { IsTerminal = true, Token = new Token(Lexemes.TypeDot, ".") });
-                            }
-                            else if (token.Lexeme == Lexemes.TypeSemicolon)
-                            {
-                                Epsilon();
-                            }
-                            else
-                            {
-                                throw new SyntaxErrorException($"Ожидался символ: '.' или ';', но отсканирован символ: '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                            }
-                            break;
-                        //UnqualifiedClassInstanceCreationExpression:
-                        //    new Identifier()
-                        case NonTerminals.UnqualifiedClassInstanceCreationExpression:
-                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
-                            {
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeNewKeyWord, "new") });
-                            }
-                            else
-                            {
-                                throw new SyntaxErrorException($"Ожидался символ: 'new', но отсканирован символ: '{token.Value}'." +
-                                    $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
-                            }
-                            break;
-                        //  FieldAccess:
-                        //      Literal.Identifier FieldAccess_1
-                        //      | TypeName.Identifier FieldAccess_1
-                        //      | MethodInvocation.Identifier FieldAccess_1
-                        //      | ClassInstanceCreationExpression.Identifier FieldAccess_1
+
+                           
+                        // FieldAccess:
+                        //      PrimaryExpression.Identifier | Identifier
                         case NonTerminals.FieldAccess:
                             if (token.Lexeme == Lexemes.TypeIntKeyWord
                                 || token.Lexeme == Lexemes.TypeDoubleKeyWord
@@ -1113,8 +955,10 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             else if (token.Lexeme == Lexemes.TypeIdentifier)
                             {
-                                // TODO: обработать TypeName.Identifier FieldAccess_1, MethodInvocation.Identifier FieldAccess_1, ClassInstanceCreationExpression.Identifier FieldAccess_1
-
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                
+                                _lexer.RestorePosition(position);
                             }
                             else
                             {
