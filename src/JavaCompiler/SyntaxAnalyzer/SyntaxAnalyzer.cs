@@ -879,27 +879,179 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        //Expression:
-                        //    AdditiveExpression > AdditiveExpression
-                        //    | AdditiveExpression < AdditiveExpression
-                        //    | AdditiveExpression >= AdditiveExpression
-                        //    | AdditiveExpression <= AdditiveExpression
-                        //    | AdditiveExpression == AdditiveExpression
-                        //    | AdditiveExpression != AdditiveExpression
-                        //    | +AdditiveExpression
-                        //    | -AdditiveExpression
-                        //    | AdditiveExpression
+                        //Expression: 
+                        //    | +AdditiveExpression Expression_1
+                        //    | -AdditiveExpression Expression_1
+                        //    | AdditiveExpression Expression_1
                         case NonTerminals.Expression:
                             if (token.Lexeme == Lexemes.TypePlus)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypePlus, "+") });
                             }
                             else if (token.Lexeme == Lexemes.TypeMinus)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeMinus, "-") });
                             }
+                            else
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
+                            }
+                            break;
+                        //Expression_1:
+                        //    < AdditiveExpression Expression_1
+                        //    | >= AdditiveExpression Expression_1
+                        //    | <= AdditiveExpression Expression_1
+                        //    | > AdditiveExpression Expression_1
+                        //    | == AdditiveExpression Expression_1
+                        //    | != AdditiveExpression Expression_1
+                        //    | EPSILON
+                        case NonTerminals.Expression_1:
+                            if (token.Lexeme == Lexemes.TypeSemicolon 
+                                || token.Lexeme == Lexemes.TypeCloseParenthesis
+                                || token.Lexeme == Lexemes.TypeComma)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                string lexemeValue;
+                                switch (token.Lexeme)
+                                {
+                                    case Lexemes.TypeLessSign: lexemeValue = "<"; break;
+                                    case Lexemes.TypeLessOrEqualSign: lexemeValue = "<="; break;
+                                    case Lexemes.TypeMoreSign: lexemeValue = ">"; break;
+                                    case Lexemes.TypeMoreOrEqualSign: lexemeValue = ">="; break;
+                                    case Lexemes.TypeEqualSign: lexemeValue = "=="; break;
+                                    case Lexemes.TypeNotEqualSign: lexemeValue = "!="; break;
+                                    default: throw new SyntaxErrorException($"Ожидался знак сравнения, но отсканирован символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                }
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(token.Lexeme, lexemeValue) });
+                            }
+                            break;
+                        // AdditiveExpression: MultiplicativeExpression AdditiveExpression_1
+                        case NonTerminals.AdditiveExpression:
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression_1 });
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MultiplicativeExpression });
+                            break;
+                        // AdditiveExpression_1:
+                        //     +MultiplicativeExpression AdditiveExpression_1
+                        //     | -MultiplicativeExpression AdditiveExpression_1
+                        //     | EPSILON
+                        case NonTerminals.AdditiveExpression_1:
+                            if (token.Lexeme == Lexemes.TypeComma
+                                || token.Lexeme == Lexemes.TypeSemicolon
+                                || token.Lexeme == Lexemes.TypeCloseParenthesis)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                string lexemeValue;
+                                switch (token.Lexeme)
+                                {
+                                    case Lexemes.TypePlus: lexemeValue = "+"; break;
+                                    case Lexemes.TypeMinus: lexemeValue = "-"; break;
+                                    default: throw new SyntaxErrorException($"Ожидался знак '+' или '-', но отсканирован символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                }
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.AdditiveExpression_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MultiplicativeExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(token.Lexeme, lexemeValue) });
+                            }
+                            break;
+                        // MultiplicativeExpression: PrefixExpression MultiplicativeExpression_1
+                        case NonTerminals.MultiplicativeExpression:
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MultiplicativeExpression_1 });
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrefixExpression });
+                            break;
+                        // MultiplicativeExpression_1:
+                        //     *MultiplicativeExpression_1
+                        //     | / MultiplicativeExpression_1
+                        //     | % MultiplicativeExpression_1
+                        //     | EPSILON
+                        case NonTerminals.MultiplicativeExpression_1:
+                            if (token.Lexeme == Lexemes.TypeComma
+                                || token.Lexeme == Lexemes.TypeSemicolon
+                                || token.Lexeme == Lexemes.TypeCloseParenthesis)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                string lexemeValue;
+                                switch (token.Lexeme)
+                                {
+                                    case Lexemes.TypeMult: lexemeValue = "*"; break;
+                                    case Lexemes.TypeDiv: lexemeValue = "/"; break;
+                                    case Lexemes.TypeMod: lexemeValue = "%"; break;
+                                    default: throw new SyntaxErrorException($"Ожидался знак '*', '/' или '%', но отсканирован символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                }
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MultiplicativeExpression_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(token.Lexeme, lexemeValue) });
+                            }
+                            break;
+                        // PrefixExpression:
+                        //     ++PrefixExpression
+                        //     | --PrefixExpression
+                        //     | PostfixExpression
+                        case NonTerminals.PrefixExpression:
+                            if (token.Lexeme == Lexemes.TypeIncrement
+                                || token.Lexeme == Lexemes.TypeDecrement)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrefixExpression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(token.Lexeme, token.Value) });
+                            }
+                            else
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PostfixExpression });
+                            }
+                            break;
+                        // PostfixExpression: PrimaryExpression PostfixExpression_1
+                        case NonTerminals.PostfixExpression:
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PostfixExpression_1 });
+                            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression });
+                            break;
+                        // PostfixExpression_1:
+                        //     ++PostfixExpression_1
+                        //     | --PostfixExpression_1
+                        //     | EPSILON
+                        case NonTerminals.PostfixExpression_1:
+                            if (token.Lexeme == Lexemes.TypeComma
+                                || token.Lexeme == Lexemes.TypeSemicolon
+                                || token.Lexeme == Lexemes.TypeCloseParenthesis)
+                            {
+                                Epsilon();
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIncrement
+                                || token.Lexeme == Lexemes.TypeDecrement)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MultiplicativeExpression_1 });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(token.Lexeme, token.Value) });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался знак '++' или '--', но отсканирован символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        // PrimaryExpression:
+                        //     Name
+                        //     | Literal
+                        //     | MethodInvocation
+                        //     | (Expression)
+                        //     | new Name()
+                        //     | FieldAccess
+                        case NonTerminals.PrimaryExpression:
+
                             break;
                         default:
                             throw new SyntaxErrorException($"Неопределенная ошибка при анализе нетерминала...({data.NonTerminal})");

@@ -68,6 +68,7 @@ namespace JavaCompiler.Common
         LeftHandSide,
         AssignmentOperator,
         Expression,
+        Expression_1,
         ConstantExpression,
         Literal,
         IntegerLiteral,
@@ -92,6 +93,8 @@ namespace JavaCompiler.Common
         /// Данный нетерминал не принадлежит таблице
         /// </summary>
         Invalid,
-        Identifier
+        Identifier,
+        PrefixExpression,
+        PostfixExpression_1
     }
 }
