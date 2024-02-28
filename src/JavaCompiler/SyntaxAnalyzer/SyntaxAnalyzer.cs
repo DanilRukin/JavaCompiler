@@ -1051,7 +1051,60 @@ namespace JavaCompiler.SyntaxAnalyzer
                         //     | new Name()
                         //     | FieldAccess
                         case NonTerminals.PrimaryExpression:
-
+                            if (token.Lexeme == Lexemes.TypeNewKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeNewKeyWord, "new") });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeOpenParenthesis)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeCloseParenthesis) });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeOpenParenthesis) });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeBooleanLiteral
+                                || token.Lexeme == Lexemes.TypeIntLiteral
+                                || token.Lexeme == Lexemes.TypeDoubleLiteral
+                                || token.Lexeme == Lexemes.TypeNullLiteral)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Literal });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = ResolveMethodInvokationOrFieldAccess() });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Отсканирован неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        // Name: Identifier | Identifier.Name 
+                        case NonTerminals.Name:
+                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            {
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                ThrowIfDefault(nextToken);
+                                if (nextToken.Lexeme == Lexemes.TypeDot)
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeDot) });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                }
+                                else
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                }
+                                _lexer.RestorePosition(position);
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался идентификатор, но неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
                             break;
                         default:
                             throw new SyntaxErrorException($"Неопределенная ошибка при анализе нетерминала...({data.NonTerminal})");
