@@ -36,7 +36,7 @@ namespace UnitTests.JavaCompiler
         public void Analyze_ClassKeyWordMissed_ThrowsSyntaxErrorExceptionWithMessage()
         {
             string text = "Main { }";
-            string message = $"Ожидался символ: 'class', но отсканирован символ: 'Main'." +
+            string message = $"Ожидалось определение класса, но отсканирован символ: 'Main'." +
                                     $"Строка: 0, столбец: {text.IndexOf("Main") + "Main".Length}";
             _analyzer.SetText(text);
             var error = Assert.Throws<SyntaxErrorException>(_analyzer.Analyze);

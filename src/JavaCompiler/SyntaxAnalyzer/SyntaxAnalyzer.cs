@@ -345,7 +345,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 {
                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
                                     _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, NonTerminal = NonTerminals.Identifier });
                                 }
                                 else // не содержит выражение
                                 {
@@ -1105,6 +1105,9 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 throw new SyntaxErrorException($"Ожидался идентификатор, но неожиданный символ: '{token.Value}'." +
                                         $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
+                            break;
+                        case NonTerminals.Identifier:
+                            _mag.Push(new SyntaxData() { IsTerminal = true, Token = token.Clone() });
                             break;
                         default:
                             throw new SyntaxErrorException($"Неопределенная ошибка при анализе нетерминала...({data.NonTerminal})");

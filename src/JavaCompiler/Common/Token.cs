@@ -151,5 +151,11 @@ namespace JavaCompiler.Common
             result.Value = lexemeValue;
             return result;
         }
+
+        public Token Clone()
+        {
+            Token result = new Token(Lexeme, (string)Value.Clone());
+            return result;
+        }
     }
 }
