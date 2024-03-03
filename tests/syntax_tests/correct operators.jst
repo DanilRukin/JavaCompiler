@@ -1,0 +1,57 @@
+class Main
+{
+    void Method()
+    {
+        while (true)
+        {
+            a++;
+            a--;
+        }
+
+        while (false)
+        {
+            ++a;
+            --a;
+        }
+
+        return;
+        return 1;
+        return new Main();
+        return Method();
+
+        while (SomeField.IsOk)
+        {
+            a += b;
+            b -= c;
+            c = 85;
+        }
+
+        while (four == 4) {}
+
+        while(four != 5)
+        {
+            while (five == 5)
+            {
+                while (6 < 7)
+                {
+                    while (9 > 8)
+                    {
+                        while (6 >= 5)
+                        {
+                            while (6 <= 7)
+                            {
+                                while (SomeMethod().SomeInnerMethod().SomeField.IsOk())
+                                {
+                                    while (SomeMethod().SomeInnerMethod().SomeField.SomeFieldMethod() == AnotherMethod().AnotheFieldValue)
+                                    {
+                                        return SomeField.new SomeInnerClass();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

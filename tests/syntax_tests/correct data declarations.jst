@@ -1,0 +1,27 @@
+class Main
+{
+    int fieldA = 5, fieldB = 4;
+    boolean a = true, b = false;
+    double c = 12.34, d = 23.90;
+    SomeClass.SomeInnerClass someField = new SomeClass.SomeInnerClass();
+
+    final SomeClass finalField = new SomeClass();
+
+    SomeClass.SomeInnerClass Method()
+    {
+        SomeClass.SomeInnerClass someInnerClass = someField;
+        return someInnerClass;
+    }
+
+    void MethodWithClass()
+    {
+        class Main2{};
+        return;
+    }
+
+    void W()
+    {
+        SomeClass.SomeInnerClass f = Method();
+        return;
+    }
+}

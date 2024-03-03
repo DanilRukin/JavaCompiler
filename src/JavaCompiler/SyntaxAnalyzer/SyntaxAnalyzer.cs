@@ -10,6 +10,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace JavaCompiler.SyntaxAnalyzer
 {
@@ -192,8 +193,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             {
                                 Lexer.Position position = _lexer.SavePosition();
                                 Token nextToken = _lexer.NextToken();
-                                if (nextToken == Token.Default())
-                                    throw new SyntaxErrorException("Встречен конец файла");
+                                ThrowIfDefault(nextToken);
                                 if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // встречен конструктор, только надо, чтобы этот идентификтор совпадал с именем класса
                                 {
                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ConstructorDeclaration });
@@ -345,7 +345,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 {
                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
                                     _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeAssignmentSign, "=") });
-                                    _mag.Push(new SyntaxData() { IsTerminal = true, NonTerminal = NonTerminals.Identifier });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = token.Clone() });
                                 }
                                 else // не содержит выражение
                                 {
@@ -1109,8 +1109,60 @@ namespace JavaCompiler.SyntaxAnalyzer
                         case NonTerminals.Identifier:
                             _mag.Push(new SyntaxData() { IsTerminal = true, Token = token.Clone() });
                             break;
+                        // Type:
+                        //     PrimitiveType
+                        //     | Name
+                        case NonTerminals.Type:
+                            if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimitiveType });
+                            }
+                            else
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                            }
+                            break;
+                        // PrimitiveType:
+                        //     int
+                        //     | double
+                        //     | boolean
+                        case NonTerminals.PrimitiveType:
+                            if (token.Lexeme == Lexemes.TypeIntKeyWord
+                                || token.Lexeme == Lexemes.TypeDoubleKeyWord
+                                || token.Lexeme == Lexemes.TypeBooleanKeyWord)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = token.Clone() });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался тип, но неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        // Literal:
+                        //     IntegerLiteral
+                        //     | FloatingPointLiteral
+                        //     | BooleanLiteral
+                        //     | NullLiteral
+                        case NonTerminals.Literal:
+                            if (token.Lexeme == Lexemes.TypeIntLiteral
+                                || token.Lexeme == Lexemes.TypeDoubleLiteral
+                                || token.Lexeme == Lexemes.TypeBooleanLiteral
+                                || token.Lexeme == Lexemes.TypeNullLiteral)
+                            {
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = token.Clone() });
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Ожидался литерал, но неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
                         default:
-                            throw new SyntaxErrorException($"Неопределенная ошибка при анализе нетерминала...({data.NonTerminal})");
+                            throw new SyntaxErrorException($"Нет варианта обработки для нетерминала '{data.NonTerminal}'." +
+                                $" Токен '{token.Value}'). Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                     }
                 }
             }
