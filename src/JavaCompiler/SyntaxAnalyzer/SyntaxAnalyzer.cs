@@ -19,6 +19,7 @@ namespace JavaCompiler.SyntaxAnalyzer
         private const int MAG_SIZE = 5000;
         private Lexer _lexer = new Lexer();
         private Stack<SyntaxData> _mag = new Stack<SyntaxData>(MAG_SIZE);
+        private SyntaxData _data = new SyntaxData();
         private class SyntaxData
         {
             public Token Token { get; set; } = Token.Default();
@@ -53,44 +54,45 @@ namespace JavaCompiler.SyntaxAnalyzer
             _lexer.ClearText();
         }
 
-        private void Epsilon() => _mag.Pop();
+        private void Epsilon() => _data = _mag.Pop();
 
         public void Analyze()
         {
             bool analyze = true;
             Token token;
+            _data = new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.CompilationUnit };
             _mag.Clear();
-            _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.CompilationUnit });  // вносим аксиому в начало
-            SyntaxData data;
+            _mag.Push(_data);  // вносим аксиому в начало           
             token = _lexer.NextToken();
             while (analyze)
             {
-                data = _mag.Pop();
-                if (data.IsTerminal)  // в верхушке магазина терминал
+                //data = _mag.Pop();
+                if (_data.IsTerminal)  // в верхушке магазина терминал
                 {
-                    if (token.Lexeme == data.Token.Lexeme) // совпадение с отсканированным терминалом
+                    if (token.Lexeme == _data.Token.Lexeme) // совпадение с отсканированным терминалом
                     {
-                        if (data.Token.Lexeme == Lexemes.TypeEnd)
+                        if (_data.Token.Lexeme == Lexemes.TypeEnd)
                             analyze = false;
                         else
                         {
                             token = _lexer.NextToken();
+                            _data = _mag.Pop();
                         }
                     }
                     else
                     {
                         // ошибка
-                        if (data.Token.Lexeme == Lexemes.TypeIdentifier)
+                        if (_data.Token.Lexeme == Lexemes.TypeIdentifier)
                             throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован символ: '{token.Value}'. " +
                                 $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                         else
-                            throw new SyntaxErrorException($"Ожидался символ: '{data.Token.Value}', но отсканирован символ: '{token.Value}'. " +
+                            throw new SyntaxErrorException($"Ожидался символ: '{_data.Token.Value}', но отсканирован символ: '{token.Value}'. " +
                                 $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                     }
                 }
                 else
                 {
-                    switch(data.NonTerminal)
+                    switch(_data.NonTerminal)
                     {
                         //CompilationUnit:
                         //    | TypeDeclarations
@@ -103,7 +105,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.TypeDeclarations });
                             }
                             break;
-                        // TypeDeclarations: ClassDeclaration | ClassDeclaration TypeDeclarations | EPSILON
+                        // TypeDeclarations: ClassDeclaration TypeDeclarations | EPSILON
                         case NonTerminals.TypeDeclarations:
                             if (token.Lexeme == Lexemes.TypeClassKeyWord
                                 || token.Lexeme == Lexemes.TypeFinalKeyWord)
@@ -126,15 +128,15 @@ namespace JavaCompiler.SyntaxAnalyzer
                             if (token.Lexeme == Lexemes.TypeClassKeyWord)
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassBody });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") }); // мы не знаем, какой именно идентификатор будет отсканирован
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeClassKeyWord, "class")});
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier }); // мы не знаем, какой именно идентификатор будет отсканирован
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeClassKeyWord) });
                             }
                             else if (token.Lexeme == Lexemes.TypeFinalKeyWord)
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassBody });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeIdentifier, "") }); // мы не знаем, какой именно идентификатор будет отсканирован
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeClassKeyWord, "class") });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeClassKeyWord, "final") });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier }); // мы не знаем, какой именно идентификатор будет отсканирован
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeClassKeyWord) });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeFinalKeyWord) });
                             }
                             else
                             {
@@ -156,7 +158,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                                     "Строка: " + _lexer.CurrentRow + ", столбец: " + _lexer.CurrentColumn);
                             }
                             break;
-                        // ClassBodyDeclarations: ClassBodyDeclaration | ClassBodyDeclaration ClassBodyDeclarations | EPSILON
+                        // ClassBodyDeclarations: ClassBodyDeclaration ClassBodyDeclarations | EPSILON
                         case NonTerminals.ClassBodyDeclarations:
                             if (token.Lexeme == Lexemes.TypeIntKeyWord
                                 || token.Lexeme == Lexemes.TypeDoubleKeyWord
@@ -284,48 +286,42 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        // FieldDeclaration: final Type VariableDeclarators ; | Type VariableDeclarators ;
+                        // FieldDeclaration: final Type VariableDeclarator VariableDeclarators ; | Type VariableDeclarator VariableDeclarators ;
                         case NonTerminals.FieldDeclaration:
                             if (token.Lexeme == Lexemes.TypeIntKeyWord
                                 || token.Lexeme == Lexemes.TypeDoubleKeyWord
                                 || token.Lexeme == Lexemes.TypeBooleanKeyWord
                                 || token.Lexeme == Lexemes.TypeIdentifier)
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeSemicolon) });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
                             }
                             else if (token.Lexeme == Lexemes.TypeFinalKeyWord)
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeSemicolon, ";") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeSemicolon) });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Type });
-                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeFinalKeyWord, "final") });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeFinalKeyWord) });
                             }
                             else
                             {
                                 throw new SyntaxErrorException($"Неверный символ '{token.Value}'. Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;
-                        // VariableDeclarators: VariableDeclarator | VariableDeclarator , VariableDeclarators
+                        // VariableDeclarators: , VariableDeclarator VariableDeclarators | EPSILON
                         case NonTerminals.VariableDeclarators: // либо просто имя, либо список имен через запятую
-                            if (token.Lexeme == Lexemes.TypeIdentifier)
+                            if (token.Lexeme == Lexemes.TypeComma)
                             {
-                                Lexer.Position position = _lexer.SavePosition();
-                                Token nextToken = _lexer.NextToken();
-                                if (nextToken == Token.Default())
-                                    throw new SyntaxErrorException("Встречен конец файла");
-                                if (nextToken.Lexeme == Lexemes.TypeComma)
-                                {
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
-                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeComma, ",") });
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
-                                }
-                                else
-                                {
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
-                                }
-                                _lexer.RestorePosition(position);                                
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarators });
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.VariableDeclarator });
+                                _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeComma) });
+                            }
+                            else if (token.Lexeme == Lexemes.TypeSemicolon)
+                            {
+                                Epsilon();
                             }
                             else
                             {
@@ -339,8 +335,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             {
                                 Lexer.Position position = _lexer.SavePosition(); // проверяем, содержит ли данное объявление выражение
                                 Token nextToken = _lexer.NextToken();
-                                if (nextToken == Token.Default())
-                                    throw new SyntaxErrorException("Встречен конец файла");
+                                ThrowIfDefault(nextToken);
                                 if (nextToken.Lexeme == Lexemes.TypeAssignmentSign)  // содержит выражение
                                 {
                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
@@ -1161,10 +1156,11 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             break;
                         default:
-                            throw new SyntaxErrorException($"Нет варианта обработки для нетерминала '{data.NonTerminal}'." +
+                            throw new SyntaxErrorException($"Нет варианта обработки для нетерминала '{_data.NonTerminal}'." +
                                 $" Токен '{token.Value}'). Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                     }
                 }
+                _data = _mag.Pop();
             }
         }
 
