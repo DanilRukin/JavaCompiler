@@ -54,7 +54,19 @@ namespace JavaCompiler.SyntaxAnalyzer
             _lexer.ClearText();
         }
 
-        private void Epsilon() => _data = _mag.Pop();
+        /// <summary>
+        /// Выбирает из стека следующий элемент (находящийся в верхушке)
+        /// </summary>
+        /// <remarks>
+        /// ОБЯЗАТЕЛЬНО ВЫЗЫВАТЬ continue после вызова, т.к. может получиться, что будут взяты лишние данные из стека
+        /// </remarks>
+        private void Epsilon()
+        {
+            _data = _mag.Pop();
+            _epsilonWasCalled = true;
+        }
+
+        private bool _epsilonWasCalled = false;
 
         public void Analyze()
         {
@@ -66,6 +78,7 @@ namespace JavaCompiler.SyntaxAnalyzer
             token = _lexer.NextToken();
             while (analyze)
             {
+                _epsilonWasCalled = false;
                 //data = _mag.Pop();
                 if (_data.IsTerminal)  // в верхушке магазина терминал
                 {
@@ -99,7 +112,9 @@ namespace JavaCompiler.SyntaxAnalyzer
                         //    | ε
                         case NonTerminals.CompilationUnit:
                             if (token.Equals(Token.Default()))
+                            {
                                 Epsilon();
+                            }
                             else
                             {
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.TypeDeclarations });
@@ -200,14 +215,9 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 {
                                     _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ConstructorDeclaration });
                                 }
-                                else if (nextToken.Lexeme == Lexemes.TypeIdentifier) // иначе, метод
+                                else // иначе, либо поле какого-то типа, либо метод, возвращающий какой-то тип
                                 {
-                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.MethodDeclaration });
-                                }
-                                else
-                                {
-                                    throw new SyntaxErrorException($"Ожидался метод или конструктор, но отсканирован символ: '{token.Value}'" +
-                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.ClassMemberDeclaration });
                                 }
                                 _lexer.RestorePosition(position);                              
                             }
@@ -1159,8 +1169,9 @@ namespace JavaCompiler.SyntaxAnalyzer
                             throw new SyntaxErrorException($"Нет варианта обработки для нетерминала '{_data.NonTerminal}'." +
                                 $" Токен '{token.Value}'). Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                     }
-                }
-                _data = _mag.Pop();
+                    if (!_epsilonWasCalled)
+                        _data = _mag.Pop();
+                }             
             }
         }
 
@@ -1171,6 +1182,10 @@ namespace JavaCompiler.SyntaxAnalyzer
         /// указатель лексера должен быть на слове 'a'. <br></br>
         /// Не изменяет текущую позицию лексера.
         /// </summary>
+        /// <remarks>
+        /// В случае со сложными идентификаторами (<code>Type.SomeType MethodName() { }</code>) указатель точно также должен быть на анализируемом имени,
+        /// т.е. тип должен быть прочитан.
+        /// </remarks>
         /// <exception cref="SyntaxErrorException"></exception>
         private NonTerminals ResolveMethodOrFieldDeclaration()
         {
