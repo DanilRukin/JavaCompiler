@@ -1049,15 +1049,15 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             break;
                         // PrimaryExpression:
-                        //     Name
-                        //     | Literal
-                        //     | MethodInvocation
-                        //     | (Expression)
-                        //     | new Name()
-                        //     | FieldAccess
+                        //    Name PrimaryExpression_1
+                        //    | Literal PrimaryExpression_1
+                        //    | Name() PrimaryExpression_1
+                        //    | (Expression)PrimaryExpression_1
+                        //    | new Name() PrimaryExpression_1
                         case NonTerminals.PrimaryExpression:
                             if (token.Lexeme == Lexemes.TypeNewKeyWord)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeCloseParenthesis, ")") });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = new Token(Lexemes.TypeOpenParenthesis, "(") });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
@@ -1065,6 +1065,7 @@ namespace JavaCompiler.SyntaxAnalyzer
                             }
                             else if (token.Lexeme == Lexemes.TypeOpenParenthesis)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeCloseParenthesis) });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Expression });
                                 _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeOpenParenthesis) });
@@ -1074,15 +1075,105 @@ namespace JavaCompiler.SyntaxAnalyzer
                                 || token.Lexeme == Lexemes.TypeDoubleLiteral
                                 || token.Lexeme == Lexemes.TypeNullLiteral)
                             {
+                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
                                 _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Literal });
                             }
                             else if (token.Lexeme == Lexemes.TypeIdentifier)
                             {
-                                _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = ResolveMethodInvokationOrFieldAccess() });
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                ThrowIfDefault(nextToken);
+                                if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis)
+                                {
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeCloseParenthesis) });
+                                    _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeOpenParenthesis) });
+                                    _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                }
+                                else if (nextToken.Lexeme == Lexemes.TypeDot) // составное имя
+                                {
+                                    while (nextToken.Lexeme == Lexemes.TypeDot)
+                                    {
+                                        nextToken = _lexer.NextToken();
+                                        ThrowIfDefault(nextToken);
+                                        if (nextToken.Lexeme != Lexemes.TypeIdentifier)
+                                        {
+                                            throw new SyntaxErrorException($"После '.' ожидался идентификатор, но отсканирован неожиданный символ: '{token.Value}'." +
+                                                $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                        }
+                                    }
+                                    // составное имя закончилось
+                                    if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // Name() PrimaryExpression_1
+                                    {
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeCloseParenthesis) });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeOpenParenthesis) });
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                    }
+                                    else // Name PrimaryExpression_1
+                                    {
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Name });
+                                    }
+                                }
+                                else
+                                {
+                                    throw new SyntaxErrorException($"При обработке составного имени был отсканирован неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                }
+                                _lexer.RestorePosition(position);                              
                             }
                             else
                             {
                                 throw new SyntaxErrorException($"Отсканирован неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                            }
+                            break;
+                        // PrimaryExpression_1:
+                        //     .Identifier() PrimaryExpression_1
+                        //     | .Identifier PrimaryExpression_1
+                        //     | EPSILON
+                        case NonTerminals.PrimaryExpression_1:
+                            if (token.Lexeme == Lexemes.TypeDot)
+                            {
+                                Lexer.Position position = _lexer.SavePosition();
+                                Token nextToken = _lexer.NextToken();
+                                ThrowIfDefault(nextToken);
+                                if (nextToken.Lexeme == Lexemes.TypeIdentifier)
+                                {
+                                    nextToken = _lexer.NextToken();
+                                    ThrowIfDefault(nextToken);
+                                    if (nextToken.Lexeme == Lexemes.TypeOpenParenthesis) // вызов метода
+                                    {
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeCloseParenthesis) });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeOpenParenthesis) });
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeDot) });
+                                    }
+                                    else // доступ к полю
+                                    {
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.PrimaryExpression_1 });
+                                        _mag.Push(new SyntaxData() { IsTerminal = false, NonTerminal = NonTerminals.Identifier });
+                                        _mag.Push(new SyntaxData() { IsTerminal = true, Token = Token.FromLexeme(Lexemes.TypeDot) });
+                                    }
+                                }
+                                else
+                                {
+                                    throw new SyntaxErrorException($"Ожидался идентификатор, но отсканирован неожиданный символ: '{token.Value}'." +
+                                        $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
+                                }
+                                _lexer.RestorePosition(position);
+                            }
+                            else if (token.Lexeme == Lexemes.TypeComma
+                                || token.Lexeme == Lexemes.TypeSemicolon
+                                || token.Lexeme == Lexemes.TypeCloseParenthesis)
+                            {
+                                Epsilon();
+                            }
+                            else
+                            {
+                                throw new SyntaxErrorException($"Отсканирован неожиданный символ при обработке выражения: '{token.Value}'." +
                                         $"Строка: {_lexer.CurrentRow}, столбец: {_lexer.CurrentColumn}");
                             }
                             break;

@@ -46,6 +46,7 @@ namespace JavaCompiler.Common
         FieldAccess_1,
         Primary,
         PrimaryExpression,
+        PrimaryExpression_1,
         MethodInvocation,
         PostfixExpression,
         PostDecrementExpression,
